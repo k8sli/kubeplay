@@ -1,0 +1,6 @@
+.git
+.github
+.gitignore
+Makefile
+build/
+!build/os-packages/packages.yaml

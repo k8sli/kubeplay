@@ -1,0 +1,29 @@
+FROM ubuntu:focal as os-focal
+ARG TARGETARCH
+ARG OS_VERSION=focal
+ARG DOCKER_MIRROR_URL="https://download.docker.com"
+ARG DEP_PACKAGES="apt-transport-https ca-certificates curl wget gnupg aptitude dpkg-dev"
+
+RUN ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') \
+    && apt update -qq \
+    && apt install -y --no-install-recommends $DEP_PACKAGES \
+    && curl -fsSL "${DOCKER_MIRROR_URL}/linux/debian/gpg" | apt-key add -qq - \
+    && echo "deb [arch=$ARCH] ${DOCKER_MIRROR_URL}/linux/ubuntu ${OS_VERSION} stable" > /etc/apt/sources.list.d/docker.list\
+    && apt update -qq
+
+WORKDIR /ubuntu/${TARGETARCH}/${OS_VERSION}
+COPY build/os-packages/packages.yaml .
+
+COPY --from=mikefarah/yq:4.11.1 /usr/bin/yq /usr/bin/yq
+RUN yq eval '.common[],.apt[],.kubespray.apt[]' packages.yaml | sort -u > packages.list \
+    && dpkg --get-selections | grep -v deinstall | cut -f1 | cut -d ':' -f1 >> packages.list \
+    && yq eval '.ubuntu[]' packages.yaml | sort -u | xargs apt-get install --reinstall --print-uris | awk -F "'" '{print $2}' | xargs -L1 wget -q -k
+
+RUN chown -R _apt /ubuntu/${TARGETARCH}/${OS_VERSION} \
+    && cat packages.list | xargs -L1 -I {} apt-cache depends --recurse --no-recommends --no-suggests \
+    --no-conflicts --no-breaks --no-replaces --no-enhances {}  | grep '^\w' | sort -u | xargs apt-get download
+
+RUN cd ../ && dpkg-scanpackages $OS_VERSION | gzip -9c > $OS_VERSION/Packages.gz
+
+FROM scratch
+COPY --from=os-focal /ubuntu /ubuntu
