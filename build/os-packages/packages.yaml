@@ -1,0 +1,63 @@
+---
+kubespray:
+  common:
+    - curl
+    - rsync
+    - socat
+    - unzip
+    - e2fsprogs
+    - xfsprogs
+    - ebtables
+    - bash-completion
+    - ipvsadm
+    - ipset
+    - conntrack
+  yum:
+    - nss
+    - libselinux-python
+    - device-mapper-libs
+  apt:
+    - python-apt
+    - aufs-tools
+    - apt-transport-https
+    - software-properties-common
+
+common:
+  - cifs-utils
+  - lsof
+  - lvm2
+  - openssl
+  - sshpass
+  - vim
+  - wget
+  - ethtool
+
+yum:
+  - nfs-utils
+  - yum-utils
+  - createrepo
+  - epel-release
+  - nc
+
+apt:
+  - nfs-common
+  - apt-transport-https
+  - ca-certificates
+  - gnupg
+  - lsb-release
+  - aptitude
+  - dpkg-dev
+  - gnupg2
+  - netcat
+
+centos7:
+  - containerd.io-1.4.6
+
+ubuntu:
+  - containerd.io=1.4.6-1
+
+debian9:
+  - containerd.io=1.4.3-1
+
+debian10:
+  - containerd.io=1.4.6-1

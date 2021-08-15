@@ -19,7 +19,7 @@ env:
   OS_PACKAGES_IMAGE_REPO: "ghcr.io/${{ github.repository_owner }}/os-packages"
 
 jobs:
-  download:
+  build:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
@@ -57,19 +57,19 @@ jobs:
           git branch --show-current | sed 's/master/latest/;s/^/IMAGE_TAG_BY_BRANCH=/' >> $GITHUB_ENV
 
           source $GITHUB_ENV
-
-          cat build/bootstrap/* | md5sum | tr -d '\ -' | sed 's/^/TOOLS_MD5=md5-/' >> $GITHUB_ENV
-          if skopeo inspect docker://${OS_PACKAGES_IMAGE_REPO}:${BRANCH_NAME} > mainfest.json; then
-            jq -r '.Labels.TOOLS_MD5' mainfest.json | sed 's/^/LATEST_TOOLS_MD5=/' >> $GITHUB_ENV
+          cat build/bootstrap/* .github/workflows/build.yaml | md5sum | tr -d '\ -' | sed 's/^/TOOLS_MD5=md5-/' >> $GITHUB_ENV
+          if skopeo inspect docker://${TOOLS_IMAGE_REPO}:${BRANCH_NAME} > mainfest.json; then
+            jq -r '.Labels.MD5' mainfest.json | sed 's/^/LATEST_TOOLS_MD5=/' >> $GITHUB_ENV
           else
             echo 'LATEST_TOOLS_MD5=null' >> $GITHUB_ENV
           fi
 
-          cat build/os-packages/* | md5sum | tr -d '\ -' | sed 's/^/OS_PACKAGES_MD5=md5-/' >> $GITHUB_ENV
+          make merge-dockerfile
+          cat build/os-packages/* .github/workflows/build.yaml | md5sum | tr -d '\ -' | sed 's/^/OS_PACKAGES_MD5=md5-/' >> $GITHUB_ENV
           if skopeo inspect docker://${OS_PACKAGES_IMAGE_REPO}:${BRANCH_NAME} > mainfest.json; then
-            jq -r '.Labels.OS_PACKAGES_MD5' mainfest.json | sed 's/^/LATEST_OS_PACKAGES_MD5=/' >> $GITHUB_ENV
+            jq -r '.Labels.MD5' mainfest.json | sed 's/^/LATEST_OS_PACKAGES_MD5=/' >> $GITHUB_ENV
           else
-            echo 'OS_PACKAGES_MD5=null' >> $GITHUB_ENV
+            echo 'LATEST_OS_PACKAGES_MD5=null' >> $GITHUB_ENV
           fi
 
       - name: Build and push bootstrap-tools images
@@ -82,14 +82,43 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
-          labels: TOOLS_MD5=${{ env.TOOLS_MD5 }}
+          labels: MD5=${{ env.TOOLS_MD5 }}
           tags: |
             ${{ env.TOOLS_IMAGE_REPO }}:${{ env.IMAGE_TAG }}
             ${{ env.TOOLS_IMAGE_REPO }}:${{ env.TOOLS_MD5 }}
             ${{ env.TOOLS_IMAGE_REPO }}:${{ env.BRANCH_NAME }}
+
+      - name: Maximize rootfs space
+        if: ${{ env.OS_PACKAGES_MD5 != env.LATEST_OS_PACKAGES_MD5 }}
+        run: |
+          df -h
+          mkdir -p temp
+          sudo rsync --delete-before -d temp/ /usr/share/dotnet/
+          sudo rsync --delete-before -d temp/ /usr/local/lib/android/
+          rm -rf temp
+          df -h
+
+      - name: Build and push os-package images
+        uses: docker/build-push-action@v2
+        if: ${{ env.OS_PACKAGES_MD5 != env.LATEST_OS_PACKAGES_MD5 }}
+        with:
+          push: true
+          context: .
+          file: build/os-packages/Dockerfile.all
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new
+          labels: MD5=${{ env.OS_PACKAGES_MD5 }}
+          tags: |
+            ${{ env.OS_PACKAGES_IMAGE_REPO }}:${{ env.IMAGE_TAG }}
+            ${{ env.OS_PACKAGES_IMAGE_REPO }}:${{ env.TOOLS_MD5 }}
+            ${{ env.OS_PACKAGES_IMAGE_REPO }}:${{ env.BRANCH_NAME }}
 
       - name: Move new cache
         run: |
           rm -rf /tmp/.buildx-cache
           mkdir -p /tmp/.buildx-cache-new
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
+
+      # debug action
+      # - uses: mxschmitt/action-tmate@v3
