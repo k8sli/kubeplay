@@ -15,11 +15,13 @@ WORKDIR /debian/${TARGETARCH}/${OS_VERSION}
 COPY build/os-packages/packages.yaml .
 
 COPY --from=mikefarah/yq:4.11.1 /usr/bin/yq /usr/bin/yq
-RUN yq eval '.common[],.apt[],.kubespray.apt[].debian10[]' packages.yaml | sort -u > packages.list \
-    && dpkg --get-selections | grep -v deinstall | cut -f1 | cut -d ':' -f1 >> packages.list
+RUN yq eval '.common[],.apt[],.kubespray.apt[]' packages.yaml | sort -u > packages.list \
+    && dpkg --get-selections | grep -v deinstall | cut -f1 | cut -d ':' -f1 >> packages.list \
+    && yq eval '.debian10[]' packages.yaml | sort -u | xargs apt-get install --reinstall --print-uris | awk -F "'" '{print $2}' | xargs -L1 wget -q -k
 
 RUN chown -R _apt /debian/${TARGETARCH}/${OS_VERSION} \
-    && cat packages.list | sort -u | xargs apt-get install --reinstall --print-uris | awk -F "'" '{print $2}' | xargs -L1 -P 8 wget -q -k
+    && cat packages.list | xargs -L1 -I {} apt-cache depends --recurse --no-recommends --no-suggests \
+    --no-conflicts --no-breaks --no-replaces --no-enhances {}  | grep '^\w' | sort -u | xargs apt-get download
 
 RUN cd ../ && dpkg-scanpackages $OS_VERSION | gzip -9c > $OS_VERSION/Packages.gz
 
