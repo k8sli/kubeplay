@@ -88,15 +88,6 @@ jobs:
             ${{ env.TOOLS_IMAGE_REPO }}:${{ env.TOOLS_MD5 }}
             ${{ env.TOOLS_IMAGE_REPO }}:${{ env.BRANCH_NAME }}
 
-      - name: Maximize rootfs space
-        if: ${{ env.OS_PACKAGES_MD5 != env.LATEST_OS_PACKAGES_MD5 }}
-        run: |
-          df -h
-          mkdir -p temp
-          sudo rsync --delete-before -d temp/ /usr/share/dotnet/
-          sudo rsync --delete-before -d temp/ /usr/local/lib/android/
-          rm -rf temp
-          df -h
 
       - name: Build and push os-package images
         uses: docker/build-push-action@v2
