@@ -90,7 +90,7 @@ jobs:
             ${{ env.KUBEPLAY_IMAGE_REPO }}:${{ env.IMAGE_TAG }}
 
       - name: Prepare for build package
-        if: true
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           echo "FROM ${{ env.KUBEPLAY_IMAGE_REPO }}:${{ env.IMAGE_TAG }}" > build/installer/Dockerfile
 
@@ -102,7 +102,6 @@ jobs:
           file: build/installer/Dockerfile
           platforms: linux/amd64,linux/arm64
           cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new
           outputs: type=local,dest=./
 
       - name: Move new cache
@@ -114,10 +113,11 @@ jobs:
       - name: Prepare for upload package
         if: startsWith(github.ref, 'refs/tags/')
         run: |
+          rm -rf linux_amd64/build/ linux_arm64/build/
           mv linux_amd64 kubeplay
-          tar cf kubeplay-${IMAGE_TAG}-amd64.tar kubeplay --remove-files
+          tar -I pigz cf kubeplay-${IMAGE_TAG}-amd64.tar.gz kubeplay --remove-files
           mv linux_arm64 kubeplay
-          tar cf kubeplay-${IMAGE_TAG}-arm64.tar kubeplay --remove-files
+          tar -I pigz cf kubeplay-${IMAGE_TAG}-arm64.tar.gz kubeplay --remove-files
 
       - name: Release and upload packages
         if: startsWith(github.ref, 'refs/tags/')
@@ -126,7 +126,5 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
-            kubeplay-${{ env.IMAGE_TAG }}-amd64.tar
-            kubeplay-${{ env.IMAGE_TAG }}-arm64.tar
-      # debug action
-      # - uses: mxschmitt/action-tmate@v3
+            kubeplay-${{ env.IMAGE_TAG }}-amd64.tar.gz
+            kubeplay-${{ env.IMAGE_TAG }}-arm64.tar.gz

@@ -3,6 +3,4 @@
 .gitignore
 Makefile
 build/
-kubespray/
-!kubespray/config/
 !build/os-packages/packages.yaml
