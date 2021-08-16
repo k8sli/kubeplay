@@ -14,10 +14,10 @@ env:
   REGISTRY_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
   KUBESPRAY_IMAGE: "ghcr.io/${{ github.repository_owner }}/kubespray"
   KUBEPLAY_IMAGE_REPO: "ghcr.io/${{ github.repository_owner }}/kubeplay"
-  KUBESPRAY_FILES_IMAGE: "ghcr.io/${{ github.repository_owner }}/kubespray-files:latest"
-  KUBESPRAY_IMAGES_IMAGE: "ghcr.io/${{ github.repository_owner }}/kubespray-images:latest"
   OS_TOOLS_IMAGE: "ghcr.io/${{ github.repository_owner }}/os-tools:latest"
   OS_PACKAGES_IMAGE: "ghcr.io/${{ github.repository_owner }}/os-packages:latest"
+  KUBESPRAY_FILES_IMAGE: "ghcr.io/${{ github.repository_owner }}/kubespray-files:latest"
+  KUBESPRAY_IMAGES_IMAGE: "ghcr.io/${{ github.repository_owner }}/kubespray-images:latest"
 
 jobs:
   build:
@@ -69,9 +69,9 @@ jobs:
           git branch --show-current | sed 's/master/latest/;s/main/latest/;s/^/IMAGE_TAG_BY_BRANCH=/' >> $GITHUB_ENV
 
           echo "" >> build/installer/Dockerfile
-          echo "COPY --from=${OS_PACKAGES_IMAGE} / /resources/nginx" >> build/installer/Dockerfile
-          echo "COPY --from=${KUBESPRAY_FILES_IMAG} / /resources/nginx" >> build/installer/Dockerfile
           echo "COPY --from=${OS_TOOLS_IMAGE} / /resources/nginx" >> build/installer/Dockerfile
+          echo "COPY --from=${OS_PACKAGES_IMAGE} / /resources/nginx" >> build/installer/Dockerfile
+          echo "COPY --from=${KUBESPRAY_FILES_IMAGE} / /resources/nginx" >> build/installer/Dockerfile
           echo "COPY --from=${KUBESPRAY_IMAGES_IMAGE} / /resources/registry" >> build/installer/Dockerfile
 
       - name: Build and push kubeplay images
