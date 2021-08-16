@@ -54,7 +54,7 @@ jobs:
         run: |
           git describe --tags --always | sed 's/^/IMAGE_TAG=/' >> $GITHUB_ENV
           git branch --show-current | sed 's/^/BRANCH_NAME=/' >> $GITHUB_ENV
-          git branch --show-current | sed 's/master/latest/;s/^/IMAGE_TAG_BY_BRANCH=/' >> $GITHUB_ENV
+          git branch --show-current | sed 's/master/latest/;s/main/latest/;s/^/IMAGE_TAG_BY_BRANCH=/' >> $GITHUB_ENV
 
           source $GITHUB_ENV
           cat build/bootstrap/* .github/workflows/build.yaml | md5sum | tr -d '\ -' | sed 's/^/TOOLS_MD5=md5-/' >> $GITHUB_ENV
@@ -87,6 +87,7 @@ jobs:
             ${{ env.TOOLS_IMAGE_REPO }}:${{ env.IMAGE_TAG }}
             ${{ env.TOOLS_IMAGE_REPO }}:${{ env.TOOLS_MD5 }}
             ${{ env.TOOLS_IMAGE_REPO }}:${{ env.BRANCH_NAME }}
+            ${{ env.TOOLS_IMAGE_REPO }}:${{ env.IMAGE_TAG_BY_BRANCH }}
 
 
       - name: Build and push os-package images
@@ -104,6 +105,7 @@ jobs:
             ${{ env.OS_PACKAGES_IMAGE_REPO }}:${{ env.IMAGE_TAG }}
             ${{ env.OS_PACKAGES_IMAGE_REPO }}:${{ env.TOOLS_MD5 }}
             ${{ env.OS_PACKAGES_IMAGE_REPO }}:${{ env.BRANCH_NAME }}
+            ${{ env.OS_PACKAGES_IMAGE_REPO }}:${{ env.IMAGE_TAG_BY_BRANCH }}
 
       - name: Move new cache
         run: |
