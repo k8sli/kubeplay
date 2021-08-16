@@ -16,7 +16,7 @@ env:
   KUBEPLAY_IMAGE_REPO: "ghcr.io/${{ github.repository_owner }}/kubeplay"
   KUBESPRAY_FILES_IMAGE: "ghcr.io/${{ github.repository_owner }}/kubespray-files:latest"
   KUBESPRAY_IMAGES_IMAGE: "ghcr.io/${{ github.repository_owner }}/kubespray-images:latest"
-  BOOTSTRAP_TOOLS_IMAGE: "ghcr.io/${{ github.repository_owner }}/bootstrap-tools:latest"
+  OS_TOOLS_IMAGE: "ghcr.io/${{ github.repository_owner }}/os-tools:latest"
   OS_PACKAGES_IMAGE: "ghcr.io/${{ github.repository_owner }}/os-packages:latest"
 
 jobs:
@@ -71,7 +71,7 @@ jobs:
           echo "" >> build/installer/Dockerfile
           echo "COPY --from=${OS_PACKAGES_IMAGE} / /resources/nginx" >> build/installer/Dockerfile
           echo "COPY --from=${KUBESPRAY_FILES_IMAG} / /resources/nginx" >> build/installer/Dockerfile
-          echo "COPY --from=${BOOTSTRAP_TOOLS_IMAGE} / /resources/nginx" >> build/installer/Dockerfile
+          echo "COPY --from=${OS_TOOLS_IMAGE} / /resources/nginx" >> build/installer/Dockerfile
           echo "COPY --from=${KUBESPRAY_IMAGES_IMAGE} / /resources/registry" >> build/installer/Dockerfile
 
       - name: Build and push kubeplay images
@@ -112,6 +112,7 @@ jobs:
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
       - name: Prepare for upload package
+        if: startsWith(github.ref, 'refs/tags/')
         run: |
           mv linux_amd64 kubeplay
           tar cf kubeplay-${IMAGE_TAG}-amd64.tar kubeplay --remove-files

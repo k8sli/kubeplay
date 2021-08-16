@@ -15,7 +15,7 @@ env:
   IMAGE_REGISTRY: "ghcr.io"
   REGISTRY_USER: "${{ github.repository_owner }}"
   REGISTRY_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-  TOOLS_IMAGE_REPO: "ghcr.io/${{ github.repository_owner }}/bootstrap-tools"
+  OS_TOOLS_IMAGE_REPO: "ghcr.io/${{ github.repository_owner }}/os-tools"
   OS_PACKAGES_IMAGE_REPO: "ghcr.io/${{ github.repository_owner }}/os-packages"
 
 jobs:
@@ -57,11 +57,11 @@ jobs:
           git branch --show-current | sed 's/master/latest/;s/main/latest/;s/^/IMAGE_TAG_BY_BRANCH=/' >> $GITHUB_ENV
 
           source $GITHUB_ENV
-          cat build/bootstrap/* .github/workflows/build.yaml | md5sum | tr -d '\ -' | sed 's/^/TOOLS_MD5=md5-/' >> $GITHUB_ENV
-          if skopeo inspect docker://${TOOLS_IMAGE_REPO}:${BRANCH_NAME} > mainfest.json; then
-            jq -r '.Labels.MD5' mainfest.json | sed 's/^/LATEST_TOOLS_MD5=/' >> $GITHUB_ENV
+          cat build/os-tools/* .github/workflows/build.yaml | md5sum | tr -d '\ -' | sed 's/^/OS_TOOLS_MD5=md5-/' >> $GITHUB_ENV
+          if skopeo inspect docker://${OS_TOOLS_IMAGE_REPO}:${BRANCH_NAME} > mainfest.json; then
+            jq -r '.Labels.MD5' mainfest.json | sed 's/^/LATEST_OS_TOOLS_MD5=/' >> $GITHUB_ENV
           else
-            echo 'LATEST_TOOLS_MD5=null' >> $GITHUB_ENV
+            echo 'LATEST_OS_TOOLS_MD5=null' >> $GITHUB_ENV
           fi
 
           make merge-dockerfile
@@ -72,22 +72,22 @@ jobs:
             echo 'LATEST_OS_PACKAGES_MD5=null' >> $GITHUB_ENV
           fi
 
-      - name: Build and push bootstrap-tools images
+      - name: Build and push os-tools images
         uses: docker/build-push-action@v2
-        if: ${{ env.TOOLS_MD5 != env.LATEST_TOOLS_MD5 }}
+        if: ${{ env.OS_TOOLS_MD5 != env.LATEST_OS_TOOLS_MD5 }}
         with:
           push: true
           context: .
-          file: build/bootstrap/Dockerfile
+          file: build/os-tools/Dockerfile
           platforms: linux/amd64,linux/arm64
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new
-          labels: MD5=${{ env.TOOLS_MD5 }}
+          labels: MD5=${{ env.OS_TOOLS_MD5 }}
           tags: |
-            ${{ env.TOOLS_IMAGE_REPO }}:${{ env.IMAGE_TAG }}
-            ${{ env.TOOLS_IMAGE_REPO }}:${{ env.TOOLS_MD5 }}
-            ${{ env.TOOLS_IMAGE_REPO }}:${{ env.BRANCH_NAME }}
-            ${{ env.TOOLS_IMAGE_REPO }}:${{ env.IMAGE_TAG_BY_BRANCH }}
+            ${{ env.OS_TOOLS_IMAGE_REPO }}:${{ env.IMAGE_TAG }}
+            ${{ env.OS_TOOLS_IMAGE_REPO }}:${{ env.OS_TOOLS_MD5 }}
+            ${{ env.OS_TOOLS_IMAGE_REPO }}:${{ env.BRANCH_NAME }}
+            ${{ env.OS_TOOLS_IMAGE_REPO }}:${{ env.IMAGE_TAG_BY_BRANCH }}
 
 
       - name: Build and push os-package images
@@ -103,7 +103,7 @@ jobs:
           labels: MD5=${{ env.OS_PACKAGES_MD5 }}
           tags: |
             ${{ env.OS_PACKAGES_IMAGE_REPO }}:${{ env.IMAGE_TAG }}
-            ${{ env.OS_PACKAGES_IMAGE_REPO }}:${{ env.TOOLS_MD5 }}
+            ${{ env.OS_PACKAGES_IMAGE_REPO }}:${{ env.OS_PACKAGES_MD5 }}
             ${{ env.OS_PACKAGES_IMAGE_REPO }}:${{ env.BRANCH_NAME }}
             ${{ env.OS_PACKAGES_IMAGE_REPO }}:${{ env.IMAGE_TAG_BY_BRANCH }}
 
