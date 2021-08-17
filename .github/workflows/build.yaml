@@ -128,7 +128,7 @@ jobs:
           git describe --tags --always | sed 's/^/IMAGE_TAG=/' >> $GITHUB_ENV
           git branch --show-current | sed 's/^/BRANCH_NAME=/' >> $GITHUB_ENV
           git branch --show-current | sed 's/master/latest/;s/main/latest/;s/^/IMAGE_TAG_BY_BRANCH=/' >> $GITHUB_ENV
-
+          source $GITHUB_ENV
           make merge-dockerfile
           cat build/os-packages/* .github/workflows/build.yaml | md5sum | tr -d '\ -' | sed 's/^/OS_PACKAGES_MD5=md5-/' >> $GITHUB_ENV
           if skopeo inspect docker://${OS_PACKAGES_IMAGE_REPO}:${BRANCH_NAME} > mainfest.json; then
