@@ -37,6 +37,14 @@ jobs:
           path: kubespray
           repository: ${{ github.repository_owner }}/kubespray
 
+      - name: Checkout kubespray repo
+        uses: actions/checkout@v2
+        with:
+          ref: master
+          fetch-depth: 0
+          path: os-packages
+          repository: ${{ github.repository_owner }}/os-packages
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v1
 
@@ -62,15 +70,15 @@ jobs:
         shell: bash
         run: |
           git describe --tags --always | sed 's/^/IMAGE_TAG=/' >> $GITHUB_ENV
-          git branch --show-current | sed 's/^/BRANCH_NAME=/' >> $GITHUB_ENV
-          git branch --show-current | sed 's/master/latest/;s/main/latest/;s/^/IMAGE_TAG_BY_BRANCH=/' >> $GITHUB_ENV
 
-          cd kubespray && git describe --tags --always | sed 's/^/KUBESPRAY_REPO_TAG=/' >> $GITHUB_ENV
-          cd .. && source $GITHUB_ENV
+          cd kubespray && git describe --tags --always | sed 's/^/KUBESPRAY_REPO_TAG=/' >> $GITHUB_ENV && cd ..
+          cd os-packages && git describe --tags --always | sed 's/^/OS_PACKAGE_REPO_TAG=/' >> $GITHUB_ENV && cd ..
+          cp -rf kubespray/config config/kubespray && rm -rf kubespray os-packages
 
+          source $GITHUB_ENV
           echo "" >> build/kubeplay/Dockerfile
           echo "COPY --from=${OS_TOOLS_IMAGE}:${IMAGE_TAG} / /" >> build/kubeplay/Dockerfile
-          echo "COPY --from=${OS_PACKAGES_IMAGE}:${IMAGE_TAG} / /resources/nginx" >> build/kubeplay/Dockerfile
+          echo "COPY --from=${OS_PACKAGES_IMAGE}:${OS_PACKAGE_REPO_TAG} / /resources/nginx" >> build/kubeplay/Dockerfile
           echo "COPY --from=${KUBESPRAY_FILES_IMAGE}:${KUBESPRAY_REPO_TAG} / /resources/nginx" >> build/kubeplay/Dockerfile
           echo "COPY --from=${KUBESPRAY_IMAGES_IMAGE}:${KUBESPRAY_REPO_TAG} / /resources/registry" >> build/kubeplay/Dockerfile
 

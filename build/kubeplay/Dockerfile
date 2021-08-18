@@ -11,7 +11,6 @@ RUN ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') \
 
 WORKDIR /kubeplay
 COPY . .
-RUN cp -rf kubespray/config config/kubespray && rm -rf kubespray
 FROM scratch
 COPY --from=builder /images /resources/images
 COPY --from=builder /kubeplay /
