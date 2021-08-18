@@ -23,6 +23,6 @@ RUN ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') \
     && skopeo copy --insecure-policy --src-tls-verify=false --override-arch ${ARCH} --additional-tag bitnami/redis:${REDIS_VERSION} \
        docker://docker.io/bitnami/redis:${REDIS_VERSION} docker-archive:bitnami-redis-${REDIS_VERSION}.tar
 
-FROM scratch as copy
+FROM scratch
 COPY --from=downloader /tools /resources/nginx/tools
-COPY --from=downloader /images/compose /images/compose
+COPY --from=downloader /images/compose /resources/images/compose
