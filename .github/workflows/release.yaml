@@ -69,7 +69,7 @@ jobs:
           cd .. && source $GITHUB_ENV
 
           echo "" >> build/kubeplay/Dockerfile
-          echo "COPY --from=${OS_TOOLS_IMAGE}:${IMAGE_TAG} / /resources/nginx" >> build/kubeplay/Dockerfile
+          echo "COPY --from=${OS_TOOLS_IMAGE}:${IMAGE_TAG} / /" >> build/kubeplay/Dockerfile
           echo "COPY --from=${OS_PACKAGES_IMAGE}:${IMAGE_TAG} / /resources/nginx" >> build/kubeplay/Dockerfile
           echo "COPY --from=${KUBESPRAY_FILES_IMAGE}:${KUBESPRAY_REPO_TAG} / /resources/nginx" >> build/kubeplay/Dockerfile
           echo "COPY --from=${KUBESPRAY_IMAGES_IMAGE}:${KUBESPRAY_REPO_TAG} / /resources/registry" >> build/kubeplay/Dockerfile

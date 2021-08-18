@@ -14,15 +14,15 @@ RUN ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') \
     && chmod a+x /tools/* \
     && ln -s /tools/skopeo-linux-${ARCH} /usr/bin/skopeo
 
-WORKDIR /images
+WORKDIR /images/compose
 RUN ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/') \
     && skopeo copy --insecure-policy --src-tls-verify=false --override-arch ${ARCH} --additional-tag nginx:${NGINX_VERSION} \
        docker://docker.io/library/nginx:${NGINX_VERSION} docker-archive:nginx-${NGINX_VERSION}.tar \
     && skopeo copy --insecure-policy --src-tls-verify=false --override-arch ${ARCH} --additional-tag registry:${RERGISRRY_VERSION} \
        docker://docker.io/library/registry:${RERGISRRY_VERSION} docker-archive:registry-${RERGISRRY_VERSION}.tar \
     && skopeo copy --insecure-policy --src-tls-verify=false --override-arch ${ARCH} --additional-tag bitnami/redis:${REDIS_VERSION} \
-       docker://docker.io/bitnami/redis:${REDIS_VERSION} docker-archive:bitnami-redis:${REDIS_VERSION}.tar
+       docker://docker.io/bitnami/redis:${REDIS_VERSION} docker-archive:bitnami-redis-${REDIS_VERSION}.tar
 
-FROM scratch
-COPY --from=downloader /tools /tools
-COPY --from=downloader /images /images
+FROM scratch as copy
+COPY --from=downloader /tools /resources/nginx/tools
+COPY --from=downloader /images/compose /images/compose
