@@ -16,14 +16,14 @@ ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
 KUBE_ROOT="$(cd "$(dirname "$0")" && pwd)"
 CERTS_DIR="${KUBE_ROOT}/config/certs"
 CONFIG_FILE="${KUBE_ROOT}/config.yaml"
+CA_CONFIGFILE="${KUBE_ROOT}/config/rootCA.cnf"
 COMPOSE_YAML_FILE="${KUBE_ROOT}/compose.yaml"
 IMAGES_DIR="${KUBE_ROOT}/resources/images"
 COMPOSE_CONFIG_DIR="${KUBE_ROOT}/config/compose"
-INSTALL_STEPS_FILE="${KUBE_ROOT}/.install_steps"
 OUTPUT_ENV_FILE="${KUBE_ROOT}/.install-env.sh"
 RESOURCES_NGINX_DIR="${KUBE_ROOT}/resources/nginx"
 KUBESPRAY_CONFIG_DIR="${KUBE_ROOT}/config/kubespray"
-CA_CONFIGFILE="${KUBE_ROOT}/config/rootCA.cnf"
+INSTALL_STEPS_FILE="${KUBESPRAY_CONFIG_DIR}/.install_steps"
 
 # Import all functions from scripts/*.sh
 for file in ${KUBE_ROOT}/scripts/*.sh; do source ${file}; done
@@ -64,23 +64,21 @@ EOF
 }
 
 deploy_cluster(){
+  common::rudder_config
+  common::push_kubespray_image
   common::run_kubespray "bash /kubespray/run.sh deploy-cluster"
 }
 
-remove_cluster(){
-  common::run_kubespray "bash /kubespray/run.sh remove-cluster"
-}
-
 add_nodes(){
-  common::run_kubespray "bash /kubespray/run.sh add-node $1"
+  common::run_kubespray "bash /kubespray/run.sh add-node $2"
 }
 
 remove_nodes(){
-  common::run_kubespray "bash /kubespray/run.sh remove-node $1"
+  common::run_kubespray "bash /kubespray/run.sh remove-node $2"
 }
 
 kubespray_debug(){
-  common::run_kubespray "/usr/bin/bash"
+  common::run_kubespray "bash"
 }
 
 install_all(){
@@ -100,11 +98,14 @@ main(){
       deploy_cluster
       ;;
     remove)
-      remove_cluster
-      remove_compose
+      remove::remove_cluster
+      remove::remove_compose
       ;;
     remove-cluster)
-      remove_cluster
+      remove::remove_cluster
+      ;;
+    remove-compose)
+      remove::remove_compose
       ;;
     add-nodes)
       ;;

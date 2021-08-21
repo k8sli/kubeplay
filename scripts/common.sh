@@ -61,15 +61,11 @@ common::rudder_config(){
   REGISTRY_AUTH_USER=$(yq eval '.compose.registry_auth_user' ${CONFIG_FILE})
   REGISTRY_AUTH_PASSWORD=$(yq eval '.compose.registry_auth_password' ${CONFIG_FILE})
   GENERATE_CRT=$(yq eval '.compose.generate_crt' ${CONFIG_FILE})
-  HTTP_URL="http://${REGISTRY_IP}:${HTTP_PORT}"
-  yq eval '.compose' ${CONFIG_FILE} > ${KUBESPRAY_CONFIG_DIR}/env.yml
+  : ${HTTP_URL:="http://${REGISTRY_IP}:${HTTP_PORT}"}
+  echo "offline_resources_url: ${HTTP_URL}" > ${KUBESPRAY_CONFIG_DIR}/env.yml
+  yq eval '.compose' ${CONFIG_FILE} >> ${KUBESPRAY_CONFIG_DIR}/env.yml
   yq eval '.kubespray' ${CONFIG_FILE} >> ${KUBESPRAY_CONFIG_DIR}/env.yml
-  echo -e "\noffline_resources_url: ${HTTP_URL}" >> ${KUBESPRAY_CONFIG_DIR}/env.yml
-}
-
-common::generate_inventory(){
-:
-# TDDO
+  yq eval '.inventory' ${CONFIG_FILE} > ${KUBESPRAY_CONFIG_DIR}/inventory
 }
 
 # Generate registry domain cert
@@ -77,7 +73,7 @@ common::generate_domain_certs(){
   if [[ ${GENERATE_CRT} == "true" ]]; then
     rm -rf ${CERTS_DIR} ${RESOURCES_NGINX_DIR}/certs
     mkdir -p ${CERTS_DIR} ${RESOURCES_NGINX_DIR}/certs
-    cp ${CA_CONFIGFILE} ${CERTS_DIR}
+    cp -f ${CA_CONFIGFILE} ${CERTS_DIR}
     infolog "Generating TLS cert for domain: ${REGISTRY_DOMAIN}"
     # Creating rootCA directory structure
     sed -i "s|CERTS_DIR|${CERTS_DIR}|" ${CERTS_DIR}/rootCA.cnf
@@ -132,7 +128,7 @@ common::generate_auth_htpasswd(){
   htpasswd -cB -b ${COMPOSE_CONFIG_DIR}/auth.htpasswd ${REGISTRY_AUTH_USER} ${REGISTRY_AUTH_PASSWORD}
 }
 
-# Insect registry domain hosts to /etc/hosts file
+# Add registry domain with ip to /etc/hosts file
 common::update_hosts(){
   sed -i "/${REGISTRY_DOMAIN}/d" /etc/hosts
   echo "${REGISTRY_IP} ${REGISTRY_DOMAIN}" >> /etc/hosts
@@ -189,8 +185,9 @@ common::health_check(){
   common::http_check https://${REGISTRY_DOMAIN}/v2/_catalog
 }
 
+# Run kubespray container
 common::run_kubespray(){
-  local KUBESPRAY_IMAGE=$(nerdctl images | awk '{print $1":"$2}' | grep '^kubespray:*' | sort -r --version-sort | head -n1)
+  : ${KUBESPRAY_IMAGE:=$(nerdctl images | awk '{print $1":"$2}' | grep '^kubespray:*' | sort -r --version-sort | head -n1)}
   nerdctl rm -f kubespray-runner >/dev/null 2>&1 || true
   nerdctl run --rm -it --net=host --name kubespray-runner \
   -v ${KUBESPRAY_CONFIG_DIR}:/kubespray/config \
@@ -199,8 +196,9 @@ common::run_kubespray(){
 
 # Push kubespray image to registry
 common::push_kubespray_image(){
-  nerdctl login "${REGISTRY_DOMAIN}:5000" -u "${REGISTRY_AUTH_USER}" -p "${REGISTRY_AUTH_PASSWORD}"
-  local KUBESPRAY_IMAGE=$(nerdctl images | awk '{print $1":"$2}' | grep '^kubespray:*' | sort -r --version-sort | head -n1)
-  nerdctl tag ${KUBESPRAY_IMAGE} ${REGISTRY_DOMAIN}/library/${KUBESPRAY_IMAGE}
-  nerdctl push ${REGISTRY_DOMAIN}/library/${KUBESPRAY_IMAGE}
+  PUSH_REGISTRY="${REGISTRY_DOMAIN}:5000"
+  : ${KUBESPRAY_IMAGE:=$(nerdctl images | awk '{print $1":"$2}' | grep '^kubespray:*' | sort -r --version-sort | head -n1)}
+  nerdctl login -u "${REGISTRY_AUTH_USER}" -p "${REGISTRY_AUTH_PASSWORD}" ${PUSH_REGISTRY}
+  nerdctl tag ${KUBESPRAY_IMAGE} ${PUSH_REGISTRY}/library/${KUBESPRAY_IMAGE}
+  nerdctl push ${PUSH_REGISTRY}/library/${KUBESPRAY_IMAGE}
 }

@@ -7,7 +7,6 @@ compose:
   registry_domain: "kube.registry.local"
   # Auto generate self-signed certificate for registry domain
   generate_crt: true
-  self_signed_cert: true
   # User and password for push image to registry
   registry_auth_user: "Username"
   registry_auth_password: "Password"
@@ -31,3 +30,43 @@ kubespray:
   # Settings for etcd event server
   etcd_events_cluster_setup: true
   etcd_events_cluster_enabled: true
+
+inventory:
+  all:
+    vars:
+      ansible_port: 22
+      ansible_user: root
+      ansible_ssh_pass: Password
+      ansible_ssh_private_key_file: /kubespray/config/id_rsa
+    hosts:
+      node1:
+        ansible_host: 172.20.0.21
+      node2:
+        ansible_host: 172.20.0.22
+      node3:
+        ansible_host: 172.20.0.23
+      node4:
+        ansible_host: 172.20.0.24
+    children:
+      kube_control_plane:
+        hosts:
+          node1:
+          node2:
+          node3:
+      kube_node:
+        hosts:
+          node1:
+          node2:
+          node3:
+          node4:
+      etcd:
+        hosts:
+          node1:
+          node2:
+          node3:
+      k8s_cluster:
+        children:
+          kube_control_plane:
+          kube_node:
+      calico_rr:
+        hosts: {}

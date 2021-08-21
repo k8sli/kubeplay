@@ -23,7 +23,7 @@ system::apt_install(){
   infolog "$* package install completed successfully"
 }
 
-system::centos::disable_firewalld_selinux(){
+system::centos::disable_firewalld(){
   if systemctl list-unit-files | grep firewalld >/dev/null; then
     warnlog "Disable firewalld service and selinux"
     systemctl stop firewalld && systemctl disable firewalld
@@ -40,9 +40,8 @@ system::centos::disable_selinux(){
 system::centos::config_repo(){
   infolog "Updated the yum repo file"
   yum clean -q all || true
-  cp ${RESOURCES_NGINX_DIR}/repos/CentOS-7-All-in-One.repo /etc/yum.repos.d/CentOS-7-All-in-One.repo
+  cp -f ${RESOURCES_NGINX_DIR}/repos/CentOS-7-All-in-One.repo /etc/yum.repos.d/CentOS-7-All-in-One.repo
   sed -i "s#${DEFAULT_URL}#file://${RESOURCES_NGINX_DIR}#g" /etc/yum.repos.d/CentOS-7-All-in-One.repo
-  sed -i "s#${DEFAULT_ARCH}#${ARCH}#g" /etc/yum.repos.d/CentOS-7-All-in-One.repo
   if yum makecache -q > /dev/null; then
     infolog "Updated the repo file successfully"
   fi
