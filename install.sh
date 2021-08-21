@@ -111,6 +111,9 @@ main(){
       ;;
     remove-node)
       ;;
+    health-check)
+      common::health_check
+      ;;
     debug)
       kubespray_debug
       ;;
