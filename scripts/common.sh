@@ -56,8 +56,8 @@ common::install_tools(){
 
 common::rudder_config(){
   # Gather variables form config.yaml
-  HTTP_PORT=$(yq eval '.compose.http_port' ${CONFIG_FILE})
-  HTTPS_PORT=$(yq eval '.compose.https_port' ${CONFIG_FILE})
+  NGINX_HTTP_PORT=$(yq eval '.compose.nginx_http_port' ${CONFIG_FILE})
+  REGISTRY_HTTPS_PORT=$(yq eval '.compose.registry_https_port' ${CONFIG_FILE})
   REGISTRY_PUSH_PORT=$(yq eval '.compose.registry_push_port' ${CONFIG_FILE})
   REGISTRY_IP=$(yq eval '.compose.registry_ip' ${CONFIG_FILE})
   REGISTRY_DOMAIN=$(yq eval '.compose.registry_domain' ${CONFIG_FILE})
@@ -68,14 +68,14 @@ common::rudder_config(){
   PUSH_REGISTRY="${REGISTRY_DOMAIN}:${REGISTRY_PUSH_PORT}"
 
   # Update compose.yaml nginx ports filed
-  http_port="${HTTP_PORT}:8080" yq eval --inplace '.services.nginx.ports[0] = strenv(http_port)' ${COMPOSE_YAML_FILE}
-  https_port="${HTTPS_PORT}:443" yq eval --inplace '.services.nginx.ports[1] = strenv(https_port)' ${COMPOSE_YAML_FILE}
+  nginx_http_port="${NGINX_HTTP_PORT}:8080" yq eval --inplace '.services.nginx.ports[0] = strenv(nginx_http_port)' ${COMPOSE_YAML_FILE}
+  registry_https_port="${REGISTRY_HTTPS_PORT}:443" yq eval --inplace '.services.nginx.ports[1] = strenv(registry_https_port)' ${COMPOSE_YAML_FILE}
   registry_push_port="${REGISTRY_PUSH_PORT}:5000" yq eval --inplace '.services.nginx.ports[2] = strenv(registry_push_port)' ${COMPOSE_YAML_FILE}
 
   # Generate kubespray's env.yaml and inventory file
-  : ${HTTP_URL:="http://${REGISTRY_IP}:${HTTP_PORT}"}
-  : ${HTTPS_URL:="https://${REGISTRY_DOMAIN}:${HTTPS_PORT}"}
-  echo "offline_resources_url: ${HTTP_URL}" > ${KUBESPRAY_CONFIG_DIR}/env.yml
+  : ${NGINX_HTTP_URL:="http://${REGISTRY_IP}:${NGINX_HTTP_PORT}"}
+  : ${REGISTRY_HTTPS_URL:="https://${REGISTRY_DOMAIN}:${REGISTRY_HTTPS_PORT}"}
+  echo "offline_resources_url: ${NGINX_HTTP_URL}" > ${KUBESPRAY_CONFIG_DIR}/env.yml
   yq eval '.compose' ${CONFIG_FILE} >> ${KUBESPRAY_CONFIG_DIR}/env.yml
   yq eval '.kubespray' ${CONFIG_FILE} >> ${KUBESPRAY_CONFIG_DIR}/env.yml
   yq eval '.inventory' ${CONFIG_FILE} > ${KUBESPRAY_CONFIG_DIR}/inventory
@@ -155,6 +155,9 @@ common::local_images(){
       infolog "Load ${image} image successfully"
     fi
   done
+  : ${KUBESPRAY_IMAGE:=$(nerdctl images | awk '{print $1":"$2}' | grep '^kubespray:*' | sort -r --version-sort | head -n1)}
+  kubespray_image="${REGISTRY_DOMAIN}/${KUBESPRAY_IMAGE}" yq eval --inplace '.kubespray.kubespray_image = strenv(kubespray_image)' ${CONFIG_FILE}
+  kubespray_image="${REGISTRY_DOMAIN}/${KUBESPRAY_IMAGE}" yq eval --inplace '.kubespray.kubespray_image = strenv(kubespray_image)' ${KUBESPRAY_CONFIG_DIR}/env.yml
 }
 
 common::compose_up(){
@@ -194,7 +197,7 @@ common::http_check(){
 }
 
 common::health_check(){
-  common::http_check ${HTTP_URL}/certs/rootCA.crt && common::http_check ${HTTPS_URL}/v2/_catalog
+  common::http_check ${NGINX_HTTP_URL}/certs/rootCA.crt && common::http_check ${REGISTRY_HTTPS_URL}/v2/_catalog
 }
 
 # Run kubespray container

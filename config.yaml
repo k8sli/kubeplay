@@ -1,14 +1,14 @@
 compose:
   # Nginx http server bind port for download files and packages
-  http_port: 8080
+  nginx_http_port: 8080
   # For container runtime pull image, use 443 as default
-  https_port: 443
+  registry_https_port: 443
   # For user push image to this registry, use 5000 as default
   registry_push_port: 5000
   # Registry host ip for add to /etc/hosts by domain
   registry_ip: 172.20.0.25
   # Registry domain for CRI runtime download image
-  registry_domain: "kube.registry.local"
+  registry_domain: kube.registry.local
   # Auto generate self-signed certificate for registry domain
   generate_crt: true
   # User and password for push image to registry
@@ -21,9 +21,9 @@ kubespray:
   # Kubernetes version by default, only support v1.20.6
   kube_version: v1.21.3
   # For deploy HA cluster you must configure a external apiserver access ip
-  external_apiserver_access_ip: "127.0.0.1"
+  external_apiserver_access_ip: 127.0.0.1
   # Set network plugin to calico with vxlan mode by default
-  kube_network_plugin: "calico"
+  kube_network_plugin: calico
   # Set true to download and cache container
   download_container: false
   # Use nginx and registry provide all offline resources
@@ -35,6 +35,8 @@ kubespray:
   # Settings for etcd event server
   etcd_events_cluster_setup: true
   etcd_events_cluster_enabled: true
+  # Kubespray container image for deploy user cluster
+  kubespray_image: ""
 
 inventory:
   all:
@@ -42,7 +44,7 @@ inventory:
       ansible_port: 22
       ansible_user: root
       ansible_ssh_pass: Password
-      ansible_ssh_private_key_file: /kubespray/config/id_rsa
+      # ansible_ssh_private_key_file: /kubespray/config/id_rsa
     hosts:
       node1:
         ansible_host: 172.20.0.21

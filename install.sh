@@ -98,13 +98,16 @@ main(){
       deploy_cluster
       ;;
     remove)
+      common::rudder_config
       remove::remove_cluster
       remove::remove_compose
       ;;
     remove-cluster)
+      common::rudder_config
       remove::remove_cluster
       ;;
     remove-compose)
+      common::rudder_config
       remove::remove_compose
       ;;
     add-nodes)
