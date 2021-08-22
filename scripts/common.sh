@@ -55,21 +55,30 @@ common::install_tools(){
 }
 
 common::rudder_config(){
-  HTTP_PORT=$(yq eval '.compose.http_port' ${CONFIG_FILE})
+  # Gather variables form config.yaml
+  NGINX_HTTP_PORT=$(yq eval '.compose.nginx_http_port' ${CONFIG_FILE})
+  REGISTRY_HTTPS_PORT=$(yq eval '.compose.registry_https_port' ${CONFIG_FILE})
+  REGISTRY_PUSH_PORT=$(yq eval '.compose.registry_push_port' ${CONFIG_FILE})
   REGISTRY_IP=$(yq eval '.compose.registry_ip' ${CONFIG_FILE})
   REGISTRY_DOMAIN=$(yq eval '.compose.registry_domain' ${CONFIG_FILE})
   REGISTRY_AUTH_USER=$(yq eval '.compose.registry_auth_user' ${CONFIG_FILE})
   REGISTRY_AUTH_PASSWORD=$(yq eval '.compose.registry_auth_password' ${CONFIG_FILE})
   GENERATE_CRT=$(yq eval '.compose.generate_crt' ${CONFIG_FILE})
-  HTTP_URL="http://${REGISTRY_IP}:${HTTP_PORT}"
-  yq eval '.compose' ${CONFIG_FILE} > ${KUBESPRAY_CONFIG_DIR}/env.yml
-  yq eval '.kubespray' ${CONFIG_FILE} >> ${KUBESPRAY_CONFIG_DIR}/env.yml
-  echo -e "\noffline_resources_url: ${HTTP_URL}" >> ${KUBESPRAY_CONFIG_DIR}/env.yml
-}
+  IMAGE_REPO=$(yq eval '.compose.image_repo' ${CONFIG_FILE})
+  PUSH_REGISTRY="${REGISTRY_DOMAIN}:${REGISTRY_PUSH_PORT}"
 
-common::generate_inventory(){
-:
-# TDDO
+  # Update compose.yaml nginx ports filed
+  nginx_http_port="${NGINX_HTTP_PORT}:8080" yq eval --inplace '.services.nginx.ports[0] = strenv(nginx_http_port)' ${COMPOSE_YAML_FILE}
+  registry_https_port="${REGISTRY_HTTPS_PORT}:443" yq eval --inplace '.services.nginx.ports[1] = strenv(registry_https_port)' ${COMPOSE_YAML_FILE}
+  registry_push_port="${REGISTRY_PUSH_PORT}:5000" yq eval --inplace '.services.nginx.ports[2] = strenv(registry_push_port)' ${COMPOSE_YAML_FILE}
+
+  # Generate kubespray's env.yaml and inventory file
+  : ${NGINX_HTTP_URL:="http://${REGISTRY_IP}:${NGINX_HTTP_PORT}"}
+  : ${REGISTRY_HTTPS_URL:="https://${REGISTRY_DOMAIN}:${REGISTRY_HTTPS_PORT}"}
+  echo "offline_resources_url: ${NGINX_HTTP_URL}" > ${KUBESPRAY_CONFIG_DIR}/env.yml
+  yq eval '.compose' ${CONFIG_FILE} >> ${KUBESPRAY_CONFIG_DIR}/env.yml
+  yq eval '.kubespray' ${CONFIG_FILE} >> ${KUBESPRAY_CONFIG_DIR}/env.yml
+  yq eval '.inventory' ${CONFIG_FILE} > ${KUBESPRAY_CONFIG_DIR}/inventory
 }
 
 # Generate registry domain cert
@@ -77,7 +86,7 @@ common::generate_domain_certs(){
   if [[ ${GENERATE_CRT} == "true" ]]; then
     rm -rf ${CERTS_DIR} ${RESOURCES_NGINX_DIR}/certs
     mkdir -p ${CERTS_DIR} ${RESOURCES_NGINX_DIR}/certs
-    cp ${CA_CONFIGFILE} ${CERTS_DIR}
+    cp -f ${CA_CONFIGFILE} ${CERTS_DIR}
     infolog "Generating TLS cert for domain: ${REGISTRY_DOMAIN}"
     # Creating rootCA directory structure
     sed -i "s|CERTS_DIR|${CERTS_DIR}|" ${CERTS_DIR}/rootCA.cnf
@@ -132,7 +141,7 @@ common::generate_auth_htpasswd(){
   htpasswd -cB -b ${COMPOSE_CONFIG_DIR}/auth.htpasswd ${REGISTRY_AUTH_USER} ${REGISTRY_AUTH_PASSWORD}
 }
 
-# Insect registry domain hosts to /etc/hosts file
+# Add registry domain with ip to /etc/hosts file
 common::update_hosts(){
   sed -i "/${REGISTRY_DOMAIN}/d" /etc/hosts
   echo "${REGISTRY_IP} ${REGISTRY_DOMAIN}" >> /etc/hosts
@@ -146,6 +155,9 @@ common::local_images(){
       infolog "Load ${image} image successfully"
     fi
   done
+  : ${KUBESPRAY_IMAGE:=$(nerdctl images | awk '{print $1":"$2}' | grep '^kubespray:*' | sort -r --version-sort | head -n1)}
+  kubespray_image="${REGISTRY_DOMAIN}/${KUBESPRAY_IMAGE}" yq eval --inplace '.kubespray.kubespray_image = strenv(kubespray_image)' ${CONFIG_FILE}
+  kubespray_image="${REGISTRY_DOMAIN}/${KUBESPRAY_IMAGE}" yq eval --inplace '.kubespray.kubespray_image = strenv(kubespray_image)' ${KUBESPRAY_CONFIG_DIR}/env.yml
 }
 
 common::compose_up(){
@@ -185,22 +197,23 @@ common::http_check(){
 }
 
 common::health_check(){
-  common::http_check ${HTTP_URL}/certs/rootCA.crt
-  common::http_check https://${REGISTRY_DOMAIN}/v2/_catalog
+  common::http_check ${NGINX_HTTP_URL}/certs/rootCA.crt && common::http_check ${REGISTRY_HTTPS_URL}/v2/_catalog
 }
 
+# Run kubespray container
 common::run_kubespray(){
-  local KUBESPRAY_IMAGE=$(nerdctl images | awk '{print $1":"$2}' | grep '^kubespray:*' | sort -r --version-sort | head -n1)
+  : ${KUBESPRAY_IMAGE:=$(nerdctl images | awk '{print $1":"$2}' | grep '^kubespray:*' | sort -r --version-sort | head -n1)}
   nerdctl rm -f kubespray-runner >/dev/null 2>&1 || true
   nerdctl run --rm -it --net=host --name kubespray-runner \
   -v ${KUBESPRAY_CONFIG_DIR}:/kubespray/config \
+  -e KUBESPRAY_IMAGE=${KUBESPRAY_IMAGE} \
   ${KUBESPRAY_IMAGE} $1
 }
 
 # Push kubespray image to registry
 common::push_kubespray_image(){
-  nerdctl login "${REGISTRY_DOMAIN}:5000" -u "${REGISTRY_AUTH_USER}" -p "${REGISTRY_AUTH_PASSWORD}"
-  local KUBESPRAY_IMAGE=$(nerdctl images | awk '{print $1":"$2}' | grep '^kubespray:*' | sort -r --version-sort | head -n1)
-  nerdctl tag ${KUBESPRAY_IMAGE} ${REGISTRY_DOMAIN}/library/${KUBESPRAY_IMAGE}
-  nerdctl push ${REGISTRY_DOMAIN}/library/${KUBESPRAY_IMAGE}
+  : ${KUBESPRAY_IMAGE:=$(nerdctl images | awk '{print $1":"$2}' | grep '^kubespray:*' | sort -r --version-sort | head -n1)}
+  nerdctl login -u "${REGISTRY_AUTH_USER}" -p "${REGISTRY_AUTH_PASSWORD}" ${PUSH_REGISTRY}
+  nerdctl tag ${KUBESPRAY_IMAGE} ${PUSH_REGISTRY}/${IMAGE_REPO}/${KUBESPRAY_IMAGE}
+  nerdctl push ${PUSH_REGISTRY}/${IMAGE_REPO}/${KUBESPRAY_IMAGE}
 }
