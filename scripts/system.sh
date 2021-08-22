@@ -48,7 +48,7 @@ system::centos::config_repo(){
 }
 
 system::centos::install_packages(){
-  yum_install libseccomp createrepo httpd-tools ${COMMON_PKGS}
+  system::yum_install libseccomp createrepo httpd-tools ${COMMON_PKGS}
 }
 
 system::debian::disable_firewalld(){

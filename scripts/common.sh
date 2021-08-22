@@ -132,7 +132,7 @@ common::generate_domain_certs(){
     echo ${REGISTRY_DOMAIN}-rootCA.crt >> /etc/ca-certificates.conf
     update-ca-certificates >/dev/null
   elif command -v update-ca-trust; then
-    cp {CERTS_DIR}/rootCA.crt /etc/pki/ca-trust/source/anchors/${REGISTRY_DOMAIN}-rootCA.crt
+    cp ${CERTS_DIR}/rootCA.crt /etc/pki/ca-trust/source/anchors/${REGISTRY_DOMAIN}-rootCA.crt
     update-ca-trust force-enable >/dev/null
   fi
 }
