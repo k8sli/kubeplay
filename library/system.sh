@@ -29,7 +29,7 @@ system::debian::config_repo(){
   fi
 }
 
-system::ubuntu::config_pkgs_repo(){
+system::ubuntu::config_repo(){
   infolog "Updated the apt list file"
   echo "deb [trusted=yes] file://${RESOURCES_NGINX_DIR}/ubuntu/${ARCH} ${VERSION_CODENAME}/" \
         > /etc/apt/sources.list.d/offline-resources.list

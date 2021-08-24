@@ -48,10 +48,10 @@ common::install_tools(){
 
   # Install helm
   local helm_tar_file=$(find ${RESOURCES_NGINX_DIR}/files -type f -name "helm*-linux-${ARCH}.tar.gz" | sort -r --version-sort | head -n1)
-  tar -xf ${helm_tar_file} linux-amd64/helm > /dev/null
-  cp -f linux-amd64/helm ${USR_BIN_PATH}/helm
+  tar -xf ${helm_tar_file} > /dev/null
+  cp -f linux-${ARCH}/helm ${USR_BIN_PATH}/helm
   chmod a+x ${USR_BIN_PATH}/helm
-  rm -rf linux-amd64
+  rm -rf linux-${ARCH}
 
   # Install skopeo
   cp -f ${RESOURCES_NGINX_DIR}/tools/skopeo-linux-${ARCH} ${USR_BIN_PATH}/skopeo
@@ -94,10 +94,10 @@ common::rudder_config(){
     offline_resources_url=${NGINX_HTTP_URL} yq eval --inplace '.default.offline_resources_url = strenv(offline_resources_url)' ${CONFIG_FILE}
   fi
 
-  NTP_SERVER=$(yq -e eval '.default.ntp_server' ${CONFIG_FILE} 2>/dev/null)
+  NTP_SERVER=$(yq -e eval '.default.ntp_server[0]' ${CONFIG_FILE} 2>/dev/null)
   if [[ ${NTP_SERVER} == "internal_ip" ]]; then
     NTP_SERVER=${INTERNAL_IP}
-    ntp_server=${INTERNAL_IP} yq eval --inplace '.default.ntp_server = strenv(ntp_server)' ${CONFIG_FILE}
+    ntp_server=${INTERNAL_IP} yq eval --inplace '.default.ntp_server[0] = strenv(ntp_server)' ${CONFIG_FILE}
   fi
 
   REGISTRY_IP=$(yq -e eval '.default.registry_ip' ${CONFIG_FILE})
@@ -239,7 +239,6 @@ common::run_kubespray(){
   nerdctl rm -f kubespray-runner >/dev/null 2>&1 || true
   nerdctl run --rm -it --net=host --name kubespray-runner \
   -v ${KUBESPRAY_CONFIG_DIR}:/kubespray/config \
-  -e KUBESPRAY_IMAGE=${KUBESPRAY_IMAGE} \
   ${KUBESPRAY_IMAGE} $1
 }
 

@@ -69,7 +69,8 @@ inventory:
 ## if no special requirement, do not modify these parameters.
 default:
   # NTP server ip address or domain, default is internal_ip
-  ntp_server: internal_ip
+  ntp_server:
+    - internal_ip
   # Registry ip address, default is internal_ip
   registry_ip: internal_ip
   # Offline resource url for download files, default is internal_ip:nginx_http_port
