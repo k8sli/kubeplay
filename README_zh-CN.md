@@ -1,6 +1,6 @@
 ## 简介
 
-[kubelay](https://github.com/k8sli/kubeplay) 是基于 [kubespray](https://github.com/k8sli/kubespray) 实现的离线部署 kuberneres 集群的工具
+[kubeplay](https://github.com/k8sli/kubeplay) 是基于 [kubespray](https://github.com/k8sli/kubespray) 实现的离线部署 kuberneres 集群的工具
 
 ### 特性
 
