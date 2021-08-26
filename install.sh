@@ -96,7 +96,7 @@ main(){
       common::rudder_config
       remove::remove_compose
       ;;
-    add-nodes)
+    add-node)
       common::run_kubespray "bash /kubespray/run.sh add-node $2"
       ;;
     remove-node)
