@@ -2,7 +2,7 @@
 INSTALL_TYPE=$1
 : ${INSTALL_TYPE:=all}
 
-# Common utilities, variables and checks for all build scripts.
+# Common utilities, variables and checks for all scripts.
 set -o errexit
 set -o nounset
 set -o pipefail
@@ -12,7 +12,7 @@ USR_BIN_PATH=/usr/local/bin
 export PATH="${PATH}:${USR_BIN_PATH}"
 ARCH=$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')
 
-# Define glob vars
+# Define glob variables
 KUBE_ROOT="$(cd "$(dirname "$0")" && pwd)"
 CERTS_DIR="${KUBE_ROOT}/config/certs"
 CONFIG_FILE="${KUBE_ROOT}/config.yaml"
@@ -25,10 +25,10 @@ RESOURCES_NGINX_DIR="${KUBE_ROOT}/resources/nginx"
 KUBESPRAY_CONFIG_DIR="${KUBE_ROOT}/config/kubespray"
 INSTALL_STEPS_FILE="${KUBESPRAY_CONFIG_DIR}/.install_steps"
 
-# Import all functions from scripts/*.sh
-for file in ${KUBE_ROOT}/scripts/*.sh; do source ${file}; done
+# Include all functions from library/*.sh
+for file in ${KUBE_ROOT}/library/*.sh; do source ${file}; done
 
-# Get os release info
+# Gather os-release variables
 if ! source /etc/os-release; then
   errorlog "Every system that we officially support has /etc/os-release"
   exit 1
@@ -39,63 +39,49 @@ if [ ! -f ${CONFIG_FILE} ]; then
   exit 1
 fi
 
-usage(){
-  cat <<EOF
-Usage: install.sh [TYPE] [NODE_NAME]
-  The script is used for install kubernetes cluster
-
-Parameter:
-  [TYPE]\t  this param is used to determine what to do with the kubernetes cluster.
-  Available type as follow:
-    all              deploy compose addon and kubernetes cluster
-    compose          deploy nginx and registry server
-    deploy-cluster   install kubernetes cluster
-    remove-cluster   remove kubernetes cluster
-    add-node         add worker node to kubernetes cluster
-    remove-node      remove worker node to kubernetes cluster
-    debug            run debug mode for install or troubleshooting
-
-  [NODE_NAME] this param to choose node for kubespray to exceute.
-              Note: when [TYPE] is specified [add-node] or [remove-node] this parameter must be set
-              multiple nodes are separated by commas, example: node01,node02,node03
-
-EOF
-  exit 0
-}
-
-deploy_cluster(){
+deploy_compose(){
+  case ${ID} in
+    Debian|debian)
+      system::debian::config_repo
+      ;;
+    CentOS|centos)
+      system::centos::disable_selinux
+      system::centos::config_repo
+      ;;
+    Ubuntu|ubuntu)
+      system::ubuntu::config_repo
+      ;;
+    *)
+      errorlog "Not support system: ${ID}"
+      exit 1
+      ;;
+  esac
+  system::disable_firewalld
+  system::install_pkgs
+  common::install_tools
   common::rudder_config
-  common::push_kubespray_image
-  common::run_kubespray "bash /kubespray/run.sh deploy-cluster"
-}
-
-add_nodes(){
-  common::run_kubespray "bash /kubespray/run.sh add-node $2"
-}
-
-remove_nodes(){
-  common::run_kubespray "bash /kubespray/run.sh remove-node $2"
-}
-
-kubespray_debug(){
-  common::run_kubespray "bash"
-}
-
-install_all(){
-  bootstrap
-  deploy_cluster
+  common::update_hosts
+  common::generate_domain_certs
+  common::load_images
+  common::compose_up
+  common::health_check
+  system::install_chrony
 }
 
 main(){
   case ${INSTALL_TYPE} in
     all)
-      install_all
+      deploy_compose
+      common::push_kubespray_image
+      common::run_kubespray "bash /kubespray/run.sh deploy-cluster"
       ;;
     compose)
-      bootstrap
+      deploy_compose
       ;;
     cluster)
-      deploy_cluster
+      common::rudder_config
+      common::push_kubespray_image
+      common::run_kubespray "bash /kubespray/run.sh deploy-cluster"
       ;;
     remove)
       common::rudder_config
@@ -111,21 +97,23 @@ main(){
       remove::remove_compose
       ;;
     add-nodes)
+      common::run_kubespray "bash /kubespray/run.sh add-node $2"
       ;;
     remove-node)
+      common::run_kubespray "bash /kubespray/run.sh remove-node $2"
       ;;
     health-check)
       common::health_check
       ;;
     debug)
-      kubespray_debug
+      common::run_kubespray "bash"
       ;;
     -h|--help|help)
-      usage
+      common::usage
       ;;
     *)
       echowarn "unknow [TYPE] parameter: ${INSTALL_TYPE}"
-      usage
+      common::usage
       ;;
   esac
 }

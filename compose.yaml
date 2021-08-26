@@ -8,13 +8,11 @@ services:
     restart: always
     volumes:
       - ./resources/nginx:/usr/share/nginx
-      - ./config/compose/auth.htpasswd:/etc/nginx/conf.d/auth.htpasswd
       - ./config/compose/certs/domain.crt:/etc/nginx/conf.d/domain.crt
       - ./config/compose/certs/domain.key:/etc/nginx/conf.d/domain.key
       - ./config/compose/nginx.conf:/etc/nginx/conf.d/default.conf
     ports:
       - 443:443
-      - 5000:5000
       - 8080:8080
 
   registry:
@@ -23,3 +21,5 @@ services:
     restart: always
     volumes:
       - ./resources/registry:/var/lib/registry
+    ports:
+      - 127.0.0.1:5000:5000

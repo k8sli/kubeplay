@@ -8,7 +8,7 @@ remove::cleanup(){
   # Remove registry domain form /etc/hosts
   sed -i "/${REGISTRY_DOMAIN}/d" /etc/hosts
 
-  # Remove binart tools file
+  # Remove binary tools file
   rm -f ${USR_BIN_PATH}/{yq,helm,kubectl,skopeo}
 
   # Remove registry domain rootCA crt file from ca trust
