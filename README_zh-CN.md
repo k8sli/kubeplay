@@ -54,23 +54,22 @@
 
 ### 下载
 
-在 GitHub 的 release 页面 [k8sli/kubeplay/releases](https://github.com/k8sli/kubeplay/releases) 下载对应的离线安装包
+在 GitHub 的 release 页面 [k8sli/kubeplay/releases](https://github.com/k8sli/kubeplay/releases)，根据部署机器 CPU 架构选择相应的安装包，将它下载到部署节点。
 
 ```bash
-sha256sum                                    # 安装包 sha256sum 校验文件
-kubeplay-v0.1.0-alpha.1-linux-amd64.tar.gz   # 适用于 amd64 CPU 体系架构
-kubeplay-v0.1.0-alpha.1-linux-arm64.tar.gz   # 适用于 arm64 CPU 体系架构
-```
-
-### 解压
-
-```bash
-$ tar -xpf kubeplay-v0.1.0-alpha.1-linux-amd64.tar.gz
-$ cd kubeplay
-$ vi config.yaml
+sha256sum.txt                        # 安装包 sha256sum 校验文件
+kubeplay-vx.y.z-linux-amd64.tar.gz   # 适用于 amd64 CPU 体系架构
+kubeplay-vx.y.z-linux-arm64.tar.gz   # 适用于 arm64 CPU 体系架构
 ```
 
 ### 配置
+
+```bash
+$ tar -xpf kubeplay-x.y.z-linux-xxx.tar.gz
+$ cd kubeplay
+$ cp config-sample.yaml config.yaml
+$ vi config.yaml
+```
 
 `config.yaml` 配置文件主要分为如下几个部分
 

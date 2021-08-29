@@ -81,7 +81,7 @@ common::rudder_config(){
   REGISTRY_DOMAIN=$(yq eval '.compose.registry_domain' ${CONFIG_FILE})
   NGINX_HTTP_URL="http://${INTERNAL_IP}:${NGINX_HTTP_PORT}"
 
-  IMAGE_REPO=$(yq eval '.default.image_repo' ${CONFIG_FILE})
+  IMAGE_REPO=$(yq eval '.default.image_repository' ${CONFIG_FILE})
   GENERATE_DOMAIN_CRT=$(yq eval '.default.generate_domain_crt' ${CONFIG_FILE})
   REGISTRY_HTTPS_PORT=$(yq eval '.default.registry_https_port' ${CONFIG_FILE})
   REGISTRY_PUSH_PORT=$(yq eval '.default.registry_push_port' ${CONFIG_FILE})

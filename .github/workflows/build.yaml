@@ -106,7 +106,7 @@ jobs:
           tar -I pigz -cf kubeplay-${IMAGE_TAG}-linux-amd64.tar.gz kubeplay --remove-files
           mv linux_arm64 kubeplay
           tar -I pigz -cf kubeplay-${IMAGE_TAG}-linux-arm64.tar.gz kubeplay --remove-files
-          sha256sum kubeplay-${IMAGE_TAG}-linux-{amd64,arm64}.tar.gz > sha256sum
+          sha256sum kubeplay-${IMAGE_TAG}-linux-{amd64,arm64}.tar.gz > sha256sum.txt
 
       - name: Release and upload packages
         uses: softprops/action-gh-release@v1
@@ -114,6 +114,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
-            sha256sum
+            sha256sum.txt
             kubeplay-${{ env.IMAGE_TAG }}-linux-amd64.tar.gz
             kubeplay-${{ env.IMAGE_TAG }}-linux-arm64.tar.gz
