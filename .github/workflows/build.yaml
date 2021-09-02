@@ -27,10 +27,10 @@ jobs:
       matrix:
         include:
           - os_name: ubuntu-bionic
-            image_name: os-packages-ubuntu18
+            image_name: os-packages-ubuntu1804
             dockerfile: build/Dockerfile.os.ubuntu18
           - os_name: ubuntu-focal
-            image_name: os-packages-ubuntu20
+            image_name: os-packages-ubuntu2004
             dockerfile: build/Dockerfile.os.ubuntu20
           - os_name: centos-7
             image_name: os-packages-centos7
