@@ -12,10 +12,9 @@ env:
   IMAGE_REGISTRY: "ghcr.io"
   REGISTRY_USER: "${{ github.repository_owner }}"
   REGISTRY_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+  IMAGE_REPO: "ghcr.io/${{ github.repository_owner }}"
   KUBESPRAY_IMAGE: "ghcr.io/${{ github.repository_owner }}/kubespray"
   KUBEPLAY_IMAGE_REPO: "ghcr.io/${{ github.repository_owner }}/kubeplay"
-  OS_TOOLS_IMAGE: "ghcr.io/${{ github.repository_owner }}/os-tools"
-  OS_PACKAGES_IMAGE: "ghcr.io/${{ github.repository_owner }}/os-packages"
   KUBESPRAY_FILES_IMAGE: "ghcr.io/${{ github.repository_owner }}/kubespray-files"
   KUBESPRAY_IMAGES_IMAGE: "ghcr.io/${{ github.repository_owner }}/kubespray-images"
 
@@ -23,6 +22,28 @@ jobs:
   build-package:
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os_name: ubuntu-bionic
+            image_name: os-packages-ubuntu18
+            dockerfile: build/Dockerfile.os.ubuntu18
+          - os_name: ubuntu-focal
+            image_name: os-packages-ubuntu20
+            dockerfile: build/Dockerfile.os.ubuntu20
+          - os_name: centos-7
+            image_name: os-packages-centos7
+            dockerfile: build/Dockerfile.os.centos7
+          - os_name: centos-8
+            image_name: os-packages-centos8
+            dockerfile: build/Dockerfile.os.centos8
+          - os_name: debian-buster
+            image_name: os-packages-debian10
+            dockerfile: build/Dockerfile.os.debian10
+          - os_name: debian-stretch
+            image_name: os-packages-debian9
+            dockerfile: build/Dockerfile.os.debian9
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -78,7 +99,7 @@ jobs:
 
           source $GITHUB_ENV
           echo "" >> Dockerfile
-          echo "COPY --from=${OS_PACKAGES_IMAGE}:${OS_PACKAGE_REPO_TAG} / /resources/nginx" >> Dockerfile
+          echo "COPY --from=${IMAGE_REPO}/${{ matrix.image_name }}:${OS_PACKAGE_REPO_TAG} / /" >> Dockerfile
           echo "COPY --from=${KUBESPRAY_FILES_IMAGE}:${KUBESPRAY_VERSION} / /resources/nginx" >> Dockerfile
           echo "COPY --from=${KUBESPRAY_IMAGES_IMAGE}:${KUBESPRAY_VERSION} / /resources/registry" >> Dockerfile
 
@@ -103,10 +124,10 @@ jobs:
         run: |
           rm -rf linux_{amd64,arm64}/{Dockerfile,LICENSE}
           mv linux_amd64 kubeplay
-          tar -I pigz -cf kubeplay-${IMAGE_TAG}-linux-amd64.tar.gz kubeplay --remove-files
+          tar -I pigz -cf kubeplay-${{ env.IMAGE_TAG }}-${{ matrix.os_name }}-amd64.tar.gz kubeplay --remove-files
           mv linux_arm64 kubeplay
-          tar -I pigz -cf kubeplay-${IMAGE_TAG}-linux-arm64.tar.gz kubeplay --remove-files
-          sha256sum kubeplay-${IMAGE_TAG}-linux-{amd64,arm64}.tar.gz > sha256sum.txt
+          tar -I pigz -cf kubeplay-${{ env.IMAGE_TAG }}-${{ matrix.os_name }}-arm64.tar.gz kubeplay --remove-files
+          sha256sum kubeplay-${{ env.IMAGE_TAG }}-${{ matrix.os_name }}-{amd64,arm64}.tar.gz > kubeplay-${{ env.IMAGE_TAG }}-${{ matrix.os_name }}.sha256sum.txt
 
       - name: Release and upload packages
         uses: softprops/action-gh-release@v1
@@ -114,6 +135,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
-            sha256sum.txt
-            kubeplay-${{ env.IMAGE_TAG }}-linux-amd64.tar.gz
-            kubeplay-${{ env.IMAGE_TAG }}-linux-arm64.tar.gz
+            kubeplay-${{ env.IMAGE_TAG }}-${{ matrix.os_name }}.sha256sum.txt
+            kubeplay-${{ env.IMAGE_TAG }}-${{ matrix.os_name }}-amd64.tar.gz
+            kubeplay-${{ env.IMAGE_TAG }}-${{ matrix.os_name }}-arm64.tar.gz
