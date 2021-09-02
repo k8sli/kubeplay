@@ -58,6 +58,7 @@ deploy_compose(){
   esac
   system::disable_firewalld
   system::install_pkgs
+  system::install_chrony
   common::install_tools
   common::rudder_config
   common::update_hosts
@@ -65,7 +66,6 @@ deploy_compose(){
   common::load_images
   common::compose_up
   common::health_check
-  system::install_chrony
 }
 
 main(){
