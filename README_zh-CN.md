@@ -36,11 +36,14 @@
 
 ### 支持 OS
 
-| distribution | version | arch        |
-| ------------ | ------- | ----------- |
-| CentOS       | 7.9     | amd64/arm64 |
-| Debian       | 10      | amd64/arm64 |
-| Ubuntu       | 20.04   | amd64/arm6  |
+| distribution | version     | arch        |
+| ------------ | ----------- | ----------- |
+| CentOS       | 7/8         | amd64/arm64 |
+| Debian       | 9/10        | amd64/arm64 |
+| Ubuntu       | 18.04/20.04 | amd64/arm64 |
+|              |             |             |
+
+
 
 ### compose
 
@@ -54,18 +57,18 @@
 
 ### 下载
 
-在 GitHub 的 release 页面 [k8sli/kubeplay/releases](https://github.com/k8sli/kubeplay/releases)，根据部署机器 CPU 架构选择相应的安装包，将它下载到部署节点。
+在 GitHub 的 release 页面 [k8sli/kubeplay/releases](https://github.com/k8sli/kubeplay/releases)，根据部署机器的 Linux 发行版和 CPU 架构选择相应的安装包，将它下载到部署节点。
 
 ```bash
-sha256sum.txt                        # 安装包 sha256sum 校验文件
-kubeplay-vx.y.z-linux-amd64.tar.gz   # 适用于 amd64 CPU 体系架构
-kubeplay-vx.y.z-linux-arm64.tar.gz   # 适用于 arm64 CPU 体系架构
+kubeplay-v0.1.0-alpha.3-centos-7.sha256sum.txt # 安装包 sha256sum 校验文件
+kubeplay-v0.1.0-alpha.3-centos-7-amd64.tar.gz  # 适用于 CentOS 7 amd64 机器
+kubeplay-v0.1.0-alpha.3-centos-7-amd64.tar.gz  # 适用于 CentOS 7 arm64 机器
 ```
 
 ### 配置
 
 ```bash
-$ tar -xpf kubeplay-x.y.z-linux-xxx.tar.gz
+$ tar -xpf kubeplay-x.y.z-xxx-xxx.tar.gz
 $ cd kubeplay
 $ cp config-sample.yaml config.yaml
 $ vi config.yaml
