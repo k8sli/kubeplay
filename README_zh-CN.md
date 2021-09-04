@@ -16,34 +16,32 @@
 
 | addon        | version        | 用途                        |
 | ------------ | -------------- | --------------------------- |
-| kubernetes   | v1.21.3        | kubernetes                  |
+| kubernetes   | v1.21.4        | kubernetes                  |
 | containerd   | v1.4.6         | 容器运行时                  |
 | etcd         | v3.4.13        | etcd 服务                   |
 | crictl       | v1.21.0        | CRI CLI 工具                |
 | pause        | 3.3            | pause 容器镜像              |
 | cni-plugins  | v0.9.1         | CNI 插件                    |
-| calico       | v3.18.4        | calico                      |
+| calico       | v3.18.5        | calico                      |
 | autoscaler   | 1.8.3          | DNS 自动扩缩容              |
 | coredns      | v1.8.0         | 集群 DNS 服务               |
 | flannel      | v0.14.0        | flannel                     |
 | nginx        | 1.19           | node 节点反向代理 APIserver |
-| canel        | calico/flannel | 集成 calico 和 flannel      |
+| canal        | calico/flannel | 集成 calico 和 flannel      |
 | helm         | v3.6.3         | helm CLI 工具               |
 | nerdctl      | 0.8.0          | containerd CLI 工具         |
 | nerdctl-full | 0.11.0         | containerd 工具全家桶       |
 | registry     | v2.7.1         | 提供镜像下载服务            |
 | skopeo       | v1.4.0         | 镜像搬运工具                |
 
-### 支持 OS
+### 支持的 Linux 发行版
 
 | distribution | version     | arch        |
 | ------------ | ----------- | ----------- |
 | CentOS       | 7/8         | amd64/arm64 |
 | Debian       | 9/10        | amd64/arm64 |
 | Ubuntu       | 18.04/20.04 | amd64/arm64 |
-|              |             |             |
-
-
+| Fedora       | 33/34       | amd64/arm64 |
 
 ### compose
 
@@ -133,10 +131,10 @@ inventory 为 kubernetes 集群节点的 ssh 登录配置，支持 yaml, json, i
 | 参数                         | 说明                      | 示例                             |
 | ---------------------------- | ------------------------- | -------------------------------- |
 | ansible_port                 | 主机 ssh 登录端口号       | 22                               |
-| ansible_user                 | 主机 ssh 登录用户名       |                                  |
-| ansible_ssh_pass             | 主机 ssh 登录密码         |                                  |
+| ansible_user                 | 主机 ssh 登录用户名       | root                             |
+| ansible_ssh_pass             | 主机 ssh 登录密码         | password                         |
 | ansible_ssh_private_key_file | 如果使用 private key 登录 | 必须为`/kubespray/config/id_rsa` |
-| ansible_host                 | 节点 IP                   |                                  |
+| ansible_host                 | 节点 IP                   | 172.20.0.21                      |
 
 - yaml 格式
 
@@ -293,8 +291,6 @@ inventory: |
   kube_node
   calico_rr
 ```
-
-
 
 #### default
 

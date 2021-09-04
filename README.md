@@ -20,34 +20,34 @@
 
 ### Version of addons
 
-| addon        | version        | usage                        |
-| ------------ | -------------- | --------------------------- |
-| kubernetes   | v1.21.3        | kubernetes                  |
-| containerd   | v1.4.6         | container runtime                  |
-| etcd         | v3.4.13        | etcd service                   |
-| crictl       | v1.21.0        | CRI CLI tool                |
-| pause        | 3.3            | pause container image              |
-| cni-plugins  | v0.9.1         | CNI plugins                    |
-| calico       | v3.18.4        | calico                      |
-| autoscaler   | 1.8.3          | DNS auto scaling             |
-| coredns      | v1.8.0         | cluster DNS service               |
-| flannel      | v0.14.0        | flannel                     |
-| nginx        | 1.19           | reverse proxy of APIserver |
-| canel        | calico/flannel | calico and flannel intergration      |
-| helm         | v3.6.3         | helm CLI tool               |
-| nerdctl      | 0.8.0          | containerd CLI tool         |
-| nerdctl-full | 0.11.0         | containerd toolset       |
-| registry     | v2.7.1         | container image registry            |
-| skopeo       | v1.4.0         | image porting tool                |
+| addon        | version        | usage                           |
+| ------------ | -------------- | ------------------------------- |
+| kubernetes   | v1.21.4        | kubernetes                      |
+| containerd   | v1.4.6         | container runtime               |
+| etcd         | v3.4.13        | etcd service                    |
+| crictl       | v1.21.0        | CRI CLI tool                    |
+| pause        | 3.3            | pause container image           |
+| cni-plugins  | v0.9.1         | CNI plugins                     |
+| calico       | v3.18.5        | calico                          |
+| autoscaler   | 1.8.3          | DNS auto scaling                |
+| coredns      | v1.8.0         | cluster DNS service             |
+| flannel      | v0.14.0        | flannel                         |
+| nginx        | 1.19           | reverse proxy of APIserver      |
+| canal        | calico/flannel | calico and flannel intergration |
+| helm         | v3.6.3         | helm CLI tool                   |
+| nerdctl      | 0.8.0          | containerd CLI tool             |
+| nerdctl-full | 0.11.0         | containerd toolset              |
+| registry     | v2.7.1         | container image registry        |
+| skopeo       | v1.4.0         | image porting tool              |
 
-### Supported platform
+### Supported Linux Distributions
 
 | distribution | version     | arch        |
 | ------------ | ----------- | ----------- |
 | CentOS       | 7/8         | amd64/arm64 |
 | Debian       | 9/10        | amd64/arm64 |
 | Ubuntu       | 18.04/20.04 | amd64/arm64 |
-|              |             |             |
+| Fedora       | 33/34       | amd64/arm64 |
 
 
 ### compose
@@ -88,11 +88,11 @@ The `config.yaml` configuration file is divided into the following sections：
 
 #### compose
 
-| parameter            | description                             | example                |
-| --------------- | -------------------------------- | ------------------- |
-| internal_ip     | reachable IP of deploy node              | 192.168.10.11       |
-| nginx_http_port | nginx serve port        | 8080                |
-| registry_domain | registry service domain | kube.registry.local |
+| parameter       | description                 | example             |
+| --------------- | --------------------------- | ------------------- |
+| internal_ip     | reachable IP of deploy node | 192.168.10.11       |
+| nginx_http_port | nginx serve port            | 8080                |
+| registry_domain | registry service domain     | kube.registry.local |
 
 ```yaml
 compose:
@@ -106,13 +106,13 @@ compose:
 
 #### kubespray
 
-| parameter                         | description                     | example           |
-| ---------------------------- | ------------------------ | -------------- |
-| kube_version                 | kubernetes version        | v1.21.3        |
+| parameter                    | description                  | example        |
+| ---------------------------- | ---------------------------- | -------------- |
+| kube_version                 | kubernetes version           | v1.21.3        |
 | external_apiserver_access_ip | external APIserver access IP | 192.168.10.100 |
-| kube_network_plugin          | selected CNI plugin    | calico         |
-| container_manager            | container runtime               | containerd     |
-| etcd_deployment_type         | etcd deployment mode            | host           |
+| kube_network_plugin          | selected CNI plugin          | calico         |
+| container_manager            | container runtime            | containerd     |
+| etcd_deployment_type         | etcd deployment mode         | host           |
 
 ```yaml
 kubespray:
@@ -135,13 +135,13 @@ kubespray:
 
 inventory is the ssh login configuration for nodes of kubernetes cluster , supporting yaml, json, and ini formats.
 
-| parameter                         | description                      | example                             |
-| ---------------------------- | ------------------------- | -------------------------------- |
-| ansible_port                 | ssh port using by ansible       | 22                               |
-| ansible_user                 | ssh user using by ansible       |                                  |
-| ansible_ssh_pass             | ssh password using by ansible         |                                  |
-| ansible_ssh_private_key_file | ssh private key using by ansible if choose to login without password  | only valid value is `/kubespray/config/id_rsa` |
-| ansible_host                 | node IP                   |                                  |
+| parameter                    | description                                                  | example                                        |
+| ---------------------------- | ------------------------------------------------------------ | ---------------------------------------------- |
+| ansible_port                 | ssh port using by ansible                                    | 22                                             |
+| ansible_user                 | ssh user using by ansible                                    | root                                           |
+| ansible_ssh_pass             | ssh password using by ansible                                | password                                       |
+| ansible_ssh_private_key_file | ssh private key using by ansible if choose to login without password | only valid value is `/kubespray/config/id_rsa` |
+| ansible_host                 | node IP                                                      | 172.20.0.21                                    |
 
 - yaml format
 
@@ -299,22 +299,20 @@ inventory: |
   calico_rr
 ```
 
-
-
 #### default value
 
 The following default parameters are not recommended to be modified without special requirements, just leave them as default. Unmodified `ntp_server` value will be overrided by `internal_ip` from compose section; `registry_ip` and `offline_resources_url` are automatically generated based on the parameters in compose section thus not need to modify.
 
-| parameter                      | description                                     |  example   |
-| ------------------------- | ---------------------------------------- | :-----: |
-| ntp_server                | ntp clock synchronization server domain or IP              |    -    |
-| registry_ip               | registry IP                          |    -    |
-| offline_resources_url     | URL address for downloading offline resources              |    -    |
-| offline_resources_enabled | whether to deploy offline                           |  true   |
-| generate_domain_crt       | whether to generate self-signed certificate for mirror repository domain           |  true   |
-| image_repository          | repo or project of image registry               | library |
-| registry_https_port       | port of registry，PUSH operation disabled |   443   |
-| registry_push_port        | port of registry for PUSH         |  5000   |
+| parameter                 | description                                                  | example |
+| ------------------------- | ------------------------------------------------------------ | :-----: |
+| ntp_server                | ntp clock synchronization server domain or IP                |    -    |
+| registry_ip               | registry IP                                                  |    -    |
+| offline_resources_url     | URL address for downloading offline resources                |    -    |
+| offline_resources_enabled | whether to deploy offline                                    |  true   |
+| generate_domain_crt       | whether to generate self-signed certificate for mirror repository domain |  true   |
+| image_repository          | repo or project of image registry                            | library |
+| registry_https_port       | port of registry，PUSH operation disabled                    |   443   |
+| registry_push_port        | port of registry for PUSH                                    |  5000   |
 | download_container        | whether to pull images of all components under all nodes     |  false  |
 
 ```yaml
