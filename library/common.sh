@@ -44,22 +44,18 @@ common::install_tools(){
   # Install kubectl
   kubectl_file=$(find ${RESOURCES_NGINX_DIR}/files -type f -name "kubectl" | sort -r --version-sort | head -n1)
   cp -f ${kubectl_file} ${USR_BIN_PATH}/kubectl
-  chmod +x ${USR_BIN_PATH}/kubectl
 
   # Install helm
   local helm_tar_file=$(find ${RESOURCES_NGINX_DIR}/files -type f -name "helm*-linux-${ARCH}.tar.gz" | sort -r --version-sort | head -n1)
   tar -xf ${helm_tar_file} > /dev/null
   cp -f linux-${ARCH}/helm ${USR_BIN_PATH}/helm
-  chmod a+x ${USR_BIN_PATH}/helm
   rm -rf linux-${ARCH}
 
-  # Install skopeo
-  cp -f ${RESOURCES_NGINX_DIR}/tools/skopeo-linux-${ARCH} ${USR_BIN_PATH}/skopeo
-  chmod a+x ${USR_BIN_PATH}/skopeo
-
-  # Install yq
+  # Install skopeo yq mkcert
   cp -f ${RESOURCES_NGINX_DIR}/tools/yq-linux-${ARCH} ${USR_BIN_PATH}/yq
-  chmod a+x ${USR_BIN_PATH}/yq
+  cp -f ${RESOURCES_NGINX_DIR}/tools/mkcert-linux-${ARCH} ${USR_BIN_PATH}/mkcert
+  cp -f ${RESOURCES_NGINX_DIR}/tools/skopeo-linux-${ARCH} ${USR_BIN_PATH}/skopeo
+  chmod a+x ${USR_BIN_PATH}/{kubectl,helm,yq,mkcert,skopeo}
 
   # Install containerd and buildkit
   local nerdctl_tar_file=$(find ${RESOURCES_NGINX_DIR}/tools -type f -name "nerdctl-full-*-linux-${ARCH}.tar.gz" | sort -r --version-sort | head -n1)
@@ -121,56 +117,16 @@ common::rudder_config(){
 # Generate registry domain cert
 common::generate_domain_certs(){
   if [[ ${GENERATE_DOMAIN_CRT} == "true" ]]; then
+    local DOMAIN=$(echo ${REGISTRY_DOMAIN} | sed 's/[^.]*./*./')
     rm -rf ${CERTS_DIR} ${RESOURCES_NGINX_DIR}/certs
     mkdir -p ${CERTS_DIR} ${RESOURCES_NGINX_DIR}/certs
-    cp -f ${CA_CONFIGFILE} ${CERTS_DIR}
     infolog "Generating TLS cert for domain: ${REGISTRY_DOMAIN}"
-    # Creating rootCA directory structure
-    sed -i "s|CERTS_DIR|${CERTS_DIR}|" ${CERTS_DIR}/rootCA.cnf
-    mkdir -p ${CERTS_DIR}/newcerts
-    touch ${CERTS_DIR}/index.txt
-    echo "unique_subject = no" > ${CERTS_DIR}/index.txt.attr
-    echo "01" > ${CERTS_DIR}/serial
-
-    # Generate rootCA.crt along with rootCA.key
-    openssl req -config ${CERTS_DIR}/rootCA.cnf \
-      -newkey rsa:2048 -nodes -keyout ${CERTS_DIR}/rootCA.key \
-      -new -x509 -days 36500 -out ${CERTS_DIR}/rootCA.crt  \
-      -subj "/C=CN/ST=BeiJing/L=BeiJing/O=Kubeplay/CN=Kubeplay root CA" >/dev/null 2>&1
-
-    # Generate domain.key
-    openssl genrsa -out ${CERTS_DIR}/domain.key 2048 >/dev/null 2>&1
-
-    # Create CSR
-    local DOMAIN=$(echo ${REGISTRY_DOMAIN} | sed 's/[^.]*./*./')
-    openssl req -new \
-      -key ${CERTS_DIR}/domain.key \
-      -reqexts SAN \
-      -config <(cat ${CERTS_DIR}/rootCA.cnf \
-          <(printf "\n[SAN]\nsubjectAltName=DNS:${REGISTRY_DOMAIN},DNS:${DOMAIN}")) \
-      -subj "/C=CN/ST=BeiJing/L=BeiJing/O=Kubeplay/CN=${REGISTRY_DOMAIN}" \
-      -out ${CERTS_DIR}/domain.csr >/dev/null 2>&1
-
-    # Issue certificate by rootCA.crt and rootCA.key
-    openssl ca -config ${CERTS_DIR}/rootCA.cnf -batch -notext \
-      -days 36500 -in ${CERTS_DIR}/domain.csr -out ${CERTS_DIR}/domain.crt \
-      -cert ${CERTS_DIR}/rootCA.crt -keyfile ${CERTS_DIR}/rootCA.key >/dev/null 2>&1
+    CAROOT=${CERTS_DIR} mkcert -install
+    CAROOT=${CERTS_DIR} mkcert -key-file ${CERTS_DIR}/domain.key -cert-file ${CERTS_DIR}/domain.crt ${REGISTRY_DOMAIN} ${DOMAIN} 
 
     # Copy domain.crt, domain.key to nginx certs directory
     infolog "Copy certs to ${COMPOSE_CONFIG_DIR}"
-    cp -rf ${CERTS_DIR} ${COMPOSE_CONFIG_DIR}
-    cp -f ${CERTS_DIR}/rootCA.crt ${RESOURCES_NGINX_DIR}/certs
-  fi
-
-  # Trust the domain rootCA.crt
-  if command -v update-ca-certificates; then
-    cp -f ${CERTS_DIR}/rootCA.crt /usr/share/ca-certificates/${REGISTRY_DOMAIN}-rootCA.crt
-    sed -i "/${REGISTRY_DOMAIN}-rootCA.crt/d" /etc/ca-certificates.conf
-    echo ${REGISTRY_DOMAIN}-rootCA.crt >> /etc/ca-certificates.conf
-    update-ca-certificates >/dev/null
-  elif command -v update-ca-trust; then
-    cp ${CERTS_DIR}/rootCA.crt /etc/pki/ca-trust/source/anchors/${REGISTRY_DOMAIN}-rootCA.crt
-    update-ca-trust force-enable >/dev/null
+    cp -f ${CERTS_DIR}/rootCA.pem ${RESOURCES_NGINX_DIR}/certs/rootCA.crt
   fi
 }
 
