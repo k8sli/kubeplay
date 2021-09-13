@@ -5,8 +5,6 @@ on:
   push:
     tag:
       - 'v*'
-  release:
-    branches: [main, release-*]
 
 env:
   IMAGE_REGISTRY: "ghcr.io"
@@ -26,24 +24,33 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - name: all-os
-          #   image_name: os-packages-all-os
+          - name: os-packages
+            image_name: os-packages-all-os
+            package_name: resources
           - name: centos-7
             image_name: os-packages-centos7
+            package_name: kubeplay
           - name: centos-8
             image_name: os-packages-centos8
+            package_name: kubeplay
           - name: fedora-33
             image_name: os-packages-fedora33
+            package_name: kubeplay
           - name: fedora-34
             image_name: os-packages-fedora34
+            package_name: kubeplay
           - name: debian-9
             image_name: os-packages-debian9
+            package_name: kubeplay
           - name: debian-10
             image_name: os-packages-debian10
+            package_name: kubeplay
           - name: ubuntu-1804
             image_name: os-packages-ubuntu1804
+            package_name: kubeplay
           - name: ubuntu-2004
             image_name: os-packages-ubuntu2004
+            package_name: kubeplay
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -106,6 +113,10 @@ jobs:
           sed -n 's|image: nginx:|NGINX_VERSION=|p' compose.yaml | tr -d ' ' >> $GITHUB_ENV
           sed -n 's|image: registry:|RERGISRRY_VERSION=|p' compose.yaml | tr -d ' ' >> $GITHUB_ENV
 
+          if [[ ${{ matrix.package_name }} == "resources" ]]; then
+            echo -e "FROM scratch\nCOPY --from=${IMAGE_REPO}/${{ matrix.image_name }}:${OS_PACKAGE_REPO_TAG} / /" > Dockerfile
+          fi
+
       - name: Build kubeplay image to local
         uses: docker/build-push-action@v2
         with:
@@ -124,10 +135,10 @@ jobs:
         run: |
           rm -rf linux_{amd64,arm64}/{Dockerfile,LICENSE}
           mv linux_amd64 kubeplay
-          tar -I pigz -cf kubeplay-${{ env.IMAGE_TAG }}-${{ matrix.name }}-amd64.tar.gz kubeplay --remove-files
+          tar -I pigz -cf ${{ matrix.package_name }}-${{ env.IMAGE_TAG }}-${{ matrix.name }}-amd64.tar.gz kubeplay --remove-files
           mv linux_arm64 kubeplay
-          tar -I pigz -cf kubeplay-${{ env.IMAGE_TAG }}-${{ matrix.name }}-arm64.tar.gz kubeplay --remove-files
-          sha256sum kubeplay-${{ env.IMAGE_TAG }}-${{ matrix.name }}-{amd64,arm64}.tar.gz > kubeplay-${{ env.IMAGE_TAG }}-${{ matrix.name }}.sha256sum.txt
+          tar -I pigz -cf ${{ matrix.package_name }}-${{ env.IMAGE_TAG }}-${{ matrix.name }}-arm64.tar.gz kubeplay --remove-files
+          sha256sum ${{ matrix.package_name }}-${{ env.IMAGE_TAG }}-${{ matrix.name }}-{amd64,arm64}.tar.gz > ${{ matrix.package_name }}-${{ env.IMAGE_TAG }}-${{ matrix.name }}.sha256sum.txt
 
       - name: Release and upload packages
         uses: softprops/action-gh-release@v1
@@ -135,6 +146,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           files: |
-            kubeplay-${{ env.IMAGE_TAG }}-${{ matrix.name }}.sha256sum.txt
-            kubeplay-${{ env.IMAGE_TAG }}-${{ matrix.name }}-amd64.tar.gz
-            kubeplay-${{ env.IMAGE_TAG }}-${{ matrix.name }}-arm64.tar.gz
+            ${{ matrix.package_name }}-${{ env.IMAGE_TAG }}-${{ matrix.name }}.sha256sum.txt
+            ${{ matrix.package_name }}-${{ env.IMAGE_TAG }}-${{ matrix.name }}-amd64.tar.gz
+            ${{ matrix.package_name }}-${{ env.IMAGE_TAG }}-${{ matrix.name }}-arm64.tar.gz
