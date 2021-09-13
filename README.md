@@ -33,6 +33,7 @@
 | autoscaler   | 1.8.3          | DNS auto scaling                |
 | coredns      | v1.8.0         | cluster DNS service             |
 | flannel      | v0.14.0        | flannel                         |
+| cilium       | v1.9.10        | cilium                          |
 | nginx        | 1.19           | reverse proxy of APIserver      |
 | canal        | calico/flannel | calico and flannel intergration |
 | helm         | v3.6.3         | helm CLI tool                   |
@@ -304,17 +305,21 @@ inventory: |
 
 The following default parameters are not recommended to be modified without special requirements, just leave them as default. Unmodified `ntp_server` value will be overrided by `internal_ip` from compose section; `registry_ip` and `offline_resources_url` are automatically generated based on the parameters in compose section thus not need to modify.
 
-| parameter                 | description                                                  | example |
-| ------------------------- | ------------------------------------------------------------ | :-----: |
-| ntp_server                | ntp clock synchronization server domain or IP                |    -    |
-| registry_ip               | registry IP                                                  |    -    |
-| offline_resources_url     | URL address for downloading offline resources                |    -    |
-| offline_resources_enabled | whether to deploy offline                                    |  true   |
-| generate_domain_crt       | whether to generate self-signed certificate for mirror repository domain |  true   |
-| image_repository          | repo or project of image registry                            | library |
-| registry_https_port       | port of registry，PUSH operation disabled                    |   443   |
-| registry_push_port        | port of registry for PUSH                                    |  5000   |
-| download_container        | whether to pull images of all components under all nodes     |  false  |
+| parameter                     | description                                                  | example |
+| ----------------------------- | ------------------------------------------------------------ | :-----: |
+| ntp_server                    | ntp clock synchronization server domain or IP                |    -    |
+| registry_ip                   | registry IP                                                  |    -    |
+| offline_resources_url         | URL address for downloading offline resources                |    -    |
+| offline_resources_enabled     | whether to deploy offline                                    |  true   |
+| generate_domain_crt           | whether to generate self-signed certificate for mirror repository domain |  true   |
+| image_repository              | repo or project of image registry                            | library |
+| registry_https_port           | port of registry，PUSH operation disabled                    |   443   |
+| registry_push_port            | port of registry for PUSH                                    |  5000   |
+| download_container            | whether to pull images of all components under all nodes     |  false  |
+| cilium_enable_hubble          | enable support hubble in cilium                              |  false  |
+| cilium_hubble_install         | install hubble-relay, hubble-ui                              |  false  |
+| cilium_hubble_tls_generate    | install hubble-certgen and generate certificates             |  false  |
+| cilium_kube_proxy_replacement | Kube Proxy Replacement mode (strict/probe/partial)           |  probe  |
 
 ```yaml
 default:
@@ -339,6 +344,15 @@ default:
   registry_push_port: 5000
   # Set false to disable download all container images on all nodes
   download_container: false
+
+  # enable support hubble in cilium
+  cilium_enable_hubble: false
+  # install hubble-relay, hubble-ui
+  cilium_hubble_install: false
+  # install hubble-certgen and generate certificates
+  cilium_hubble_tls_generate: false
+  # Kube Proxy Replacement mode (strict/probe/partial)
+  cilium_kube_proxy_replacement: probe
 ```
 
 ### Deploy a new cluster

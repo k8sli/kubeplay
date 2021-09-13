@@ -296,17 +296,21 @@ inventory: |
 
 以下几个默认的参数在没有特殊要求的情况下不建议修改，直接保持默认即可。`ntp_server` 参数为默认值时会自动替换成 compose 中的 `internal_ip` 值；`registry_ip` 和 `offline_resources_url` 这两个参数会根据 compose 中的参数自动生成无需修改。
 
-| 参数                      | 说明                                     |  示例   |
-| ------------------------- | ---------------------------------------- | :-----: |
-| ntp_server                | ntp 时钟同步服务器域名或 IP              |    -    |
-| registry_ip               | 镜像仓库节点 IP                          |    -    |
-| offline_resources_url     | 提供离线资源下载的 URL 地址              |    -    |
-| offline_resources_enabled | 是否为离线部署                           |  true   |
-| generate_domain_crt       | 是否为镜像仓库域名生成自签证书           |  true   |
-| image_repository          | 镜像仓库的 repo 或 project               | library |
-| registry_https_port       | 镜像仓库的端口号，该端口已禁止 PUSH 镜像 |   443   |
-| registry_push_port        | 用于 PUSH 镜像的 registry 端口号         |  5000   |
-| download_container        | 是否在所有节点 pull 下所有组件的镜像     |  false  |
+| 参数                          | 说明                                     |  示例   |
+| ----------------------------- | ---------------------------------------- | :-----: |
+| ntp_server                    | ntp 时钟同步服务器域名或 IP              |    -    |
+| registry_ip                   | 镜像仓库节点 IP                          |    -    |
+| offline_resources_url         | 提供离线资源下载的 URL 地址              |    -    |
+| offline_resources_enabled     | 是否为离线部署                           |  true   |
+| generate_domain_crt           | 是否为镜像仓库域名生成自签证书           |  true   |
+| image_repository              | 镜像仓库的 repo 或 project               | library |
+| registry_https_port           | 镜像仓库的端口号，该端口已禁止 PUSH 镜像 |   443   |
+| registry_push_port            | 用于 PUSH 镜像的 registry 端口号         |  5000   |
+| download_container            | 是否在所有节点 pull 下所有组件的镜像     |  false  |
+| cilium_enable_hubble          | cilium 中是否开启 hubble                 |  false  |
+| cilium_hubble_install         | 是否安装 cilium hubble-ui                |  false  |
+| cilium_hubble_tls_generate    | hubble 是否生成 tls 证书                 |  false  |
+| cilium_kube_proxy_replacement | 使用 cilium 代替 kube-proxy 的策略       |  probe  |
 
 ```yaml
 default:
@@ -331,6 +335,14 @@ default:
   registry_push_port: 5000
   # Set false to disable download all container images on all nodes
   download_container: false
+  # enable support hubble in cilium
+  cilium_enable_hubble: false
+  # install hubble-relay, hubble-ui
+  cilium_hubble_install: false
+  # install hubble-certgen and generate certificates
+  cilium_hubble_tls_generate: false
+  # Kube Proxy Replacement mode (strict/probe/partial)
+  cilium_kube_proxy_replacement: probe
 ```
 
 ### 部署集群
