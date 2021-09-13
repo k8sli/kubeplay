@@ -11,6 +11,7 @@ kubespray:
   kube_version: v1.21.4
   # For deploy HA cluster you must configure a external apiserver access ip
   external_apiserver_access_ip: 127.0.0.1
+  # CNI support calico, flannel, canal, cilium
   # Set network plugin to calico with vxlan mode by default
   kube_network_plugin: calico
   #Container runtime, only support containerd if offline deploy
@@ -89,3 +90,12 @@ default:
   registry_push_port: 5000
   # Set false to disable download all container images on all nodes
   download_container: false
+
+  # enable support hubble in cilium
+  cilium_enable_hubble: false
+  # install hubble-relay, hubble-ui
+  cilium_hubble_install: false
+  # install hubble-certgen and generate certificates
+  cilium_hubble_tls_generate: false
+  # Kube Proxy Replacement mode (strict/probe/partial)
+  cilium_kube_proxy_replacement: probe
