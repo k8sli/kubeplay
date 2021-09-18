@@ -10,7 +10,23 @@ system::centos::disable_selinux(){
   infolog "Disabled selinux service successfully"
 }
 
+system::fedora::disable_selinux(){
+  sed -i 's/SELINUX=enforcing/SELINUX=permissive/g' /etc/selinux/config
+  setenforce 0 || warnlog "Warning: setenforce 0 failed"
+  infolog "Disabled selinux service successfully"
+}
+
 system::centos::config_repo(){
+  infolog "Updated the yum repo file"
+  yum clean -q all || true
+  cp -f ${RESOURCES_NGINX_DIR}/repos/CentOS-7-All-in-One.repo /etc/yum.repos.d/offline-resources.repo
+  sed -i "s#${DEFAULT_URL}#file://${RESOURCES_NGINX_DIR}#g" /etc/yum.repos.d/offline-resources.repo
+  if yum makecache -q > /dev/null; then
+    infolog "Updated the repo file successfully"
+  fi
+}
+
+system::fedora::config_repo(){
   infolog "Updated the yum repo file"
   yum clean -q all || true
   cp -f ${RESOURCES_NGINX_DIR}/repos/CentOS-7-All-in-One.repo /etc/yum.repos.d/offline-resources.repo

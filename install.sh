@@ -48,6 +48,10 @@ deploy_compose(){
       system::centos::disable_selinux
       system::centos::config_repo
       ;;
+    Fedora|fedora)
+      system::fedora::disable_selinux
+      system::fedora::config_repo
+      ;;
     Ubuntu|ubuntu)
       system::ubuntu::config_repo
       ;;
