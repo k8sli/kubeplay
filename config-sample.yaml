@@ -8,7 +8,7 @@ compose:
 
 kubespray:
   # Kubernetes version by default, only support v1.20.6
-  kube_version: v1.21.4
+  kube_version: v1.21.5
   # For deploy HA cluster you must configure a external apiserver access ip
   external_apiserver_access_ip: 127.0.0.1
   # CNI support calico, flannel, canal, cilium
