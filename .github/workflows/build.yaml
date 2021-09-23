@@ -61,7 +61,7 @@ jobs:
       - name: Checkout kubespray repo
         uses: actions/checkout@v2
         with:
-          ref: main
+          ref: release-2.17
           fetch-depth: 0
           path: kubespray
           repository: ${{ github.repository_owner }}/kubespray
