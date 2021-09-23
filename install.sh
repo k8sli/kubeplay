@@ -40,6 +40,12 @@ if [ ! -f ${CONFIG_FILE} ]; then
 fi
 
 deploy_compose(){
+  if grep -q 'deploy_compose' ${KUBE_ROOT}/.install_steps; then
+    common::rudder_config
+    common::load_images
+    common::health_check
+    return 0
+  fi
   case ${ID} in
     Debian|debian)
       system::debian::config_repo
@@ -70,6 +76,7 @@ deploy_compose(){
   common::load_images
   common::compose_up
   common::health_check
+  echo 'deploy_compose' > ${KUBE_ROOT}/.install_steps
 }
 
 main(){
