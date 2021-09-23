@@ -10,6 +10,7 @@ remove::cleanup(){
   mkcert -uninstall
   # Remove binary tools file
   rm -f ${USR_BIN_PATH}/{kubectl,helm,yq,mkcert,skopeo}
+  rm -f ${KUBE_ROOT}/.install_steps
 }
 
 remove::uninstall_nerdctl_full(){

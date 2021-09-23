@@ -138,6 +138,7 @@ common::update_hosts(){
 
 # Load all docker archive images
 common::load_images(){
+  infolog "Loading images"
   local IMAGES=$(find ${IMAGES_DIR} -type f -name '*.tar')
   for image in ${IMAGES}; do
     if nerdctl load -i ${image} >/dev/null; then
