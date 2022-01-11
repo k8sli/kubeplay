@@ -16,20 +16,20 @@
 
 | addon        | version        | 用途                        |
 | ------------ | -------------- | --------------------------- |
-| kubernetes   | v1.21.4        | kubernetes                  |
-| containerd   | v1.4.6         | 容器运行时                  |
-| etcd         | v3.4.13        | etcd 服务                   |
-| crictl       | v1.21.0        | CRI CLI 工具                |
+| kubernetes   | v1.22.5        | kubernetes                  |
+| containerd   | v1.5.8         | 容器运行时                  |
+| etcd         | v3.5.0         | etcd 服务                   |
+| crictl       | v1.22.0        | CRI CLI 工具                |
 | pause        | 3.3            | pause 容器镜像              |
-| cni-plugins  | v0.9.1         | CNI 插件                    |
-| calico       | v3.18.5        | calico                      |
-| autoscaler   | 1.8.3          | DNS 自动扩缩容              |
+| cni-plugins  | v1.0.1         | CNI 插件                    |
+| calico       | v3.20.5        | calico                      |
+| autoscaler   | 1.8.5          | DNS 自动扩缩容              |
 | coredns      | v1.8.0         | 集群 DNS 服务               |
-| flannel      | v0.14.0        | flannel                     |
+| flannel      | v0.15.1        | flannel                     |
 | nginx        | 1.19           | node 节点反向代理 APIserver |
 | canal        | calico/flannel | 集成 calico 和 flannel      |
-| helm         | v3.6.3         | helm CLI 工具               |
-| nerdctl      | 0.8.0          | containerd CLI 工具         |
+| helm         | v3.7.1         | helm CLI 工具               |
+| nerdctl      | 0.15.0          | containerd CLI 工具         |
 | nerdctl-full | 0.11.0         | containerd 工具全家桶       |
 | registry     | v2.7.1         | 提供镜像下载服务            |
 | skopeo       | v1.4.0         | 镜像搬运工具                |
@@ -41,7 +41,7 @@
 | CentOS       | 7/8         | amd64/arm64 |
 | Debian       | 9/10        | amd64/arm64 |
 | Ubuntu       | 18.04/20.04 | amd64/arm64 |
-| Fedora       | 33/34       | amd64/arm64 |
+| Fedora       | 34/35       | amd64/arm64 |
 
 ### compose
 
